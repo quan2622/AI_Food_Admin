@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   description: "Quản lý AI Food",
 };
 
+import { NavHeader } from "@/components/nav-header";
+
 export default function RootLayout({
   children,
 }: {
@@ -35,9 +37,12 @@ export default function RootLayout({
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-              <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-background px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mx-2 h-4" />
+              <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background px-4">
+                <div className="flex items-center gap-2">
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mx-2 h-4" />
+                  <NavHeader />
+                </div>
               </header>
               <main className="flex flex-1 flex-col p-4">{children}</main>
             </SidebarInset>
