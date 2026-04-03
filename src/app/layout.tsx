@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,7 +27,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body className="font-sans antialiased min-h-screen bg-background text-foreground">
+      <body
+        suppressHydrationWarning
+        className="font-sans antialiased min-h-screen bg-background text-foreground"
+      >
         <TooltipProvider>
           <SidebarProvider>
             <AppSidebar />
@@ -32,9 +39,7 @@ export default function RootLayout({
                 <SidebarTrigger className="-ml-1" />
                 <Separator orientation="vertical" className="mx-2 h-4" />
               </header>
-              <main className="flex flex-1 flex-col p-4">
-                {children}
-              </main>
+              <main className="flex flex-1 flex-col p-4">{children}</main>
             </SidebarInset>
           </SidebarProvider>
         </TooltipProvider>
