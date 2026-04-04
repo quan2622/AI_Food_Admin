@@ -1,0 +1,292 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN LOGIN STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Background ─── */
+.login-bg {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-bg-shapes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+
+.shape-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #667eea, transparent 70%);
+  top: -10%;
+  right: -5%;
+  animation: float-shape 20s ease-in-out infinite;
+}
+
+.shape-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #764ba2, transparent 70%);
+  bottom: -5%;
+  left: -10%;
+  animation: float-shape 25s ease-in-out infinite reverse;
+}
+
+.shape-3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #f093fb, transparent 70%);
+  top: 40%;
+  left: 30%;
+  animation: float-shape 18s ease-in-out infinite 5s;
+}
+
+.shape-4 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, #4facfe, transparent 70%);
+  bottom: 20%;
+  right: 20%;
+  animation: float-shape 22s ease-in-out infinite 3s;
+}
+
+@keyframes float-shape {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -30px) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+  75% {
+    transform: translate(15px, 10px) scale(1.02);
+  }
+}
+
+/* ─── Main Card ─── */
+.login-card {
+  background: oklch(1 0 0 / 4%);
+  backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid oklch(1 0 0 / 8%);
+  box-shadow:
+    0 25px 60px oklch(0 0 0 / 40%),
+    0 0 0 1px oklch(1 0 0 / 5%) inset;
+  min-height: 640px;
+}
+
+/* ─── Left Hero Panel ─── */
+.login-hero {
+  background: linear-gradient(160deg, #1e1e3f 0%, #252547 40%, #1a1a35 100%);
+  border-right: 1px solid oklch(1 0 0 / 6%);
+}
+
+.login-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.login-orb-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, oklch(0.7 0.15 280 / 25%), transparent);
+  top: -60px;
+  right: -80px;
+}
+
+.login-orb-2 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, oklch(0.8 0.2 140 / 20%), transparent);
+  bottom: 60px;
+  left: -50px;
+}
+
+.login-orb-3 {
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, oklch(0.7 0.12 250 / 15%), transparent);
+  top: 50%;
+  right: 20%;
+}
+
+.login-grid-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+      oklch(1 0 0 / 3%) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, oklch(1 0 0 / 3%) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.login-icon-box {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  box-shadow: 0 4px 15px oklch(0.5 0.15 280 / 30%);
+}
+
+.login-highlight-text {
+  background: linear-gradient(135deg, #cafd00, #a0e800);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: oklch(1 0 0 / 4%);
+  border: 1px solid oklch(1 0 0 / 6%);
+  backdrop-filter: blur(10px);
+}
+
+/* ─── Right Panel (Form) ─── */
+.login-icon-box-mobile {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  box-shadow: 0 4px 15px oklch(0.5 0.15 280 / 20%);
+}
+
+.login-brand-accent {
+  color: #667eea;
+}
+
+.dark .login-brand-accent {
+  color: #8b9cf7;
+}
+
+/* Input */
+.login-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.login-input-wrapper:focus-within {
+  border-color: #667eea;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.login-input {
+  flex: 1;
+  background: transparent;
+  font-size: 14px;
+  color: #1a1a2e;
+  outline: none;
+  letter-spacing: -0.01em;
+}
+
+.login-input-wrapper svg {
+  color: #64748b;
+}
+
+.login-input-wrapper:focus-within svg {
+  color: #667eea;
+}
+
+.login-input::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.login-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Submit Button */
+.login-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow:
+    0 4px 15px oklch(0.5 0.15 280 / 25%),
+    0 1px 3px oklch(0 0 0 / 10%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 25px oklch(0.5 0.15 280 / 35%),
+    0 2px 5px oklch(0 0 0 / 15%);
+}
+
+.login-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ─── Dark Mode overrides for the form side ─── */
+.dark .login-input-wrapper {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+}
+
+.dark .login-input-wrapper:focus-within {
+  border-color: #8b9cf7;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(139, 156, 247, 0.2);
+}
+
+.dark .login-input {
+  color: #1a1a2e;
+}
+
+.dark .login-input::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.dark .login-input-wrapper svg {
+  color: #64748b;
+}
+
+/* Because the page bg is dark, override card text for contrast */
+.login-bg {
+  --foreground: oklch(0.95 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .login-card {
+    min-height: auto;
+    background: oklch(1 0 0 / 6%);
+  }
+}

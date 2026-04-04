@@ -14,6 +14,9 @@ import {
   LogOut,
   ChevronDown,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { authService } from "@/services/authService";
+import { useAuthStore } from "@/stores/authStore";
 
 import { adminMenu, type MenuItem } from "../lib/menu";
 import { cn } from "@/lib/utils";
@@ -35,6 +38,17 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -48,7 +62,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { isMobile } = useSidebar();
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const logoutAction = useAuthStore((state) => state.logoutAction);
   const [openSections, setOpenSections] = React.useState<string[]>([]);
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      toast.success("Đăng xuất thành công", {
+        description: "Hẹn gặp lại bạn sớm!",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      logoutAction();
+      router.push("/login");
+    }
+  };
 
   const isMenuItemActive = (item: MenuItem) => {
     if (
@@ -223,15 +255,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src="/avatar.jpg" alt="Admin" />
+                    <AvatarImage
+                      src={user?.avatarUrl || "/avatar.jpg"}
+                      alt={user?.fullName || "Admin"}
+                    />
                     <AvatarFallback className="rounded-lg">
-                      <User2 className="h-4 w-4" />
+                      {user?.fullName?.charAt(0).toUpperCase() || (
+                        <User2 className="h-4 w-4" />
+                      )}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col gap-1 leading-none group-data-[collapsible=icon]:hidden">
-                    <span className="font-semibold">Admin User</span>
-                    <span className="text-xs text-muted-foreground">
-                      admin@aifood.vn
+                    <span className="font-semibold truncate max-w-[150px]">
+                      {user?.fullName || "Admin User"}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                      {user?.email || "admin@aifood.vn"}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto h-4 w-4 group-data-[collapsible=icon]:hidden" />
@@ -246,15 +285,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src="/avatar.jpg" alt="Admin" />
+                      <AvatarImage
+                        src={user?.avatarUrl || "/avatar.jpg"}
+                        alt={user?.fullName || "Admin"}
+                      />
                       <AvatarFallback className="rounded-lg">
-                        <User2 className="h-4 w-4" />
+                        {user?.fullName?.charAt(0).toUpperCase() || (
+                          <User2 className="h-4 w-4" />
+                        )}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1 leading-none">
-                      <span className="font-semibold">Admin User</span>
+                      <span className="font-semibold">
+                        {user?.fullName || "Admin User"}
+                      </span>
                       <span className="text-xs text-muted-foreground">
-                        admin@aifood.vn
+                        {user?.email || "admin@aifood.vn"}
                       </span>
                     </div>
                   </div>
@@ -282,7 +328,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Đăng xuất</span>
                 </DropdownMenuItem>
@@ -291,6 +340,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận đăng xuất?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Phiên làm việc của bạn sẽ kết thúc. Bạn sẽ cần đăng nhập lại để
+              tiếp tục truy cập trang quản trị.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              Đăng xuất
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sidebar>
   );
 }
