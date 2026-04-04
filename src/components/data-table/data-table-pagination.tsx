@@ -9,6 +9,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   rowCount?: number;
@@ -100,17 +108,21 @@ export function DataTablePagination<TData>({
         {/* Page size selector */}
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium">Dòng/trang</p>
-          <select
-            className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            value={pageSize}
-            onChange={(e) => changePageSize(Number(e.target.value))}
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value) => changePageSize(Number(value))}
           >
-            {[10, 20, 30, 50, 100].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[10, 20, 30, 50, 100].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Page indicator */}

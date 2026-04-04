@@ -14,6 +14,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   searchKey?: string;
@@ -58,29 +66,33 @@ export function DataTableToolbar<TData>({
           if (!tableColumn) return null;
           const filterValue = tableColumn.getFilterValue() as string;
           return (
-            <select
+            <Select
               key={column.id}
-              className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              value={filterValue ?? ""}
-              onChange={(e) =>
-                tableColumn.setFilterValue(e.target.value || undefined)
+              value={filterValue ?? "all"}
+              onValueChange={(value) =>
+                tableColumn.setFilterValue(value === "all" ? undefined : value)
               }
             >
-              <option value="">{column.title}</option>
-              {column.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder={column.title} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả {column.title.toLowerCase()}</SelectItem>
+                {column.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           );
         })}
         {isFiltered && (
           <Button
             variant="ghost"
-            size="sm"
+            size="default"
             onClick={() => table.resetColumnFilters()}
-            className="px-2 lg:px-3"
+            className="px-2 h-8 lg:px-3 font-normal"
           >
             Xóa bộ lọc
             <X className="ml-1 h-4 w-4" />
@@ -89,7 +101,7 @@ export function DataTableToolbar<TData>({
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="default" className="h-8">
             <SlidersHorizontal className="mr-2 h-4 w-4" />
             Hiển thị cột
           </Button>
