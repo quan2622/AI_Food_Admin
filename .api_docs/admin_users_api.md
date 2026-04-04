@@ -25,11 +25,13 @@ GET /users
 **Mô tả**: Lấy danh sách tất cả người dùng trong hệ thống (dành cho Admin)
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -70,6 +72,7 @@ GET /users/:id
 | id | number | ✅ | ID của user |
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -97,25 +100,28 @@ POST /users
 **Mô tả**: Tạo một user mới trong hệ thống
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
-  "email": "newuser@example.com",        // Bắt buộc - Email hợp lệ
-  "password": "123456",                   // Bắt buộc - Tối thiểu 6 ký tự
-  "fullName": "Nguyễn Văn B",             // Bắt buộc - Họ tên
-  "genderCode": "MALE",                   // Tùy chọn - MALE/FEMALE/OTHER
-  "avatarUrl": "https://...",             // Tùy chọn - URL ảnh đại diện
-  "birthOfDate": "1999-01-01",            // Tùy chọn - Ngày sinh (ISO date)
-  "isAdmin": false                        // Tùy chọn - Mặc định false
+  "email": "newuser@example.com", // Bắt buộc - Email hợp lệ
+  "password": "123456", // Bắt buộc - Tối thiểu 6 ký tự
+  "fullName": "Nguyễn Văn B", // Bắt buộc - Họ tên
+  "genderCode": "MALE", // Tùy chọn - MALE/FEMALE/OTHER
+  "avatarUrl": "https://...", // Tùy chọn - URL ảnh đại diện
+  "birthOfDate": "1999-01-01", // Tùy chọn - Ngày sinh (ISO date)
+  "isAdmin": false // Tùy chọn - Mặc định false
 }
 ```
 
 **Validation Rules**:
+
 - `email`: Phải là email hợp lệ
 - `password`: Tối thiểu 6 ký tự, tối đa 100
 - `fullName`: Không được để trống, tối đa 255 ký tự
@@ -123,6 +129,7 @@ Content-Type: application/json
 - `avatarUrl`: Tối đa 500 ký tự
 
 **Response** (201 Created):
+
 ```json
 {
   "id": 2,
@@ -150,12 +157,14 @@ PATCH /users/:id
 | id | number | ✅ | ID của user |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 ```
 
 **Request Body** (tất cả đều tùy chọn):
+
 ```json
 {
   "email": "updated@example.com",
@@ -168,6 +177,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -193,19 +203,22 @@ PATCH /users/:id/password
 | id | number | ✅ | ID của user |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
-  "newPassword": "newpassword123"    // Bắt buộc - Tối thiểu 6 ký tự
+  "newPassword": "newpassword123" // Bắt buộc - Tối thiểu 6 ký tự
 }
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "message": "Password updated successfully"
@@ -228,19 +241,22 @@ PATCH /users/:id/status
 | id | number | ✅ | ID của user |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
-  "status": false    // Bắt buộc - true (active) hoặc false (inactive)
+  "status": false // Bắt buộc - true (active) hoặc false (inactive)
 }
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -260,6 +276,7 @@ DELETE /users/:id
 **Mô tả**: Xóa user khỏi hệ thống (CASCADE - xóa cả profile, allergies, goals...)
 
 ⚠️ **Cảnh báo**: Xóa user sẽ xóa tất cả dữ liệu liên quan:
+
 - User Profile
 - User Allergies
 - Nutrition Goals
@@ -274,11 +291,13 @@ DELETE /users/:id
 | id | number | ✅ | ID của user |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
 
 **Response** (204 No Content):
+
 ```
 (empty body)
 ```
@@ -298,11 +317,13 @@ GET /user-profiles/all
 **Mô tả**: Lấy danh sách tất cả user profiles trong hệ thống
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -341,11 +362,13 @@ GET /user-profiles/by-user/:userId
 | userId | number | ✅ | ID của user |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -377,11 +400,12 @@ GET /user-profiles/:id
 | id | number | ✅ | ID của profile |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
 
-**Response** (200 OK): *Giống 2.2*
+**Response** (200 OK): _Giống 2.2_
 
 ---
 
@@ -391,25 +415,26 @@ Authorization: Bearer <admin_token>
 POST /user-profiles
 ```
 
-**Mô tả**: Tạo profile mới cho user (chỉ khi user chưa có profile)
+**Mô tả**: User tự tạo profile cho chính mình (mỗi user chỉ có 1 profile)
 
-⚠️ **Lưu ý**: Mỗi user chỉ có 1 profile duy nhất (quan hệ 1-1)
+⚠️ **Lưu ý**: Mỗi user chỉ có 1 profile duy nhất (quan hệ 1-1). User phải đăng nhập để tạo profile.
 
 **Headers**:
+
 ```
-Authorization: Bearer <admin_token>
+Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
-  "userId": 1,                          // Bắt buộc - ID của user
-  "age": 25,                            // Bắt buộc - 1-100
-  "height": 170.5,                      // Bắt buộc - Chiều cao (cm)
-  "weight": 65.0,                       // Bắt buộc - Cân nặng (kg)
-  "gender": "MALE",                     // Tùy chọn - MALE/FEMALE/OTHER
-  "activityLevel": "MODERATELY_ACTIVE"  // Tùy chọn - Xem bảng dưới
+  "age": 25, // Bắt buộc - 1-100
+  "height": 170.5, // Bắt buộc - Chiều cao (cm)
+  "weight": 65.0, // Bắt buộc - Cân nặng (kg)
+  "gender": "MALE", // Tùy chọn - MALE/FEMALE/OTHER
+  "activityLevel": "MODERATELY_ACTIVE" // Tùy chọn - Xem bảng dưới
 }
 ```
 
@@ -423,11 +448,13 @@ Content-Type: application/json
 | SUPER_ACTIVE | Vận động rất nhiều (2 lần/ngày) |
 
 **Tự động tính toán**: Khi tạo profile, hệ thống tự động tính:
+
 - `bmi`: Body Mass Index
 - `bmr`: Basal Metabolic Rate
 - `tdee`: Total Daily Energy Expenditure
 
 **Response** (201 Created):
+
 ```json
 {
   "id": 1,
@@ -458,12 +485,14 @@ PATCH /user-profiles/:id
 | id | number | ✅ | ID của profile |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 ```
 
 **Request Body** (tất cả tùy chọn):
+
 ```json
 {
   "age": 26,
@@ -477,6 +506,7 @@ Content-Type: application/json
 **Tự động tính toán lại**: BMI, BMR, TDEE sẽ được tính lại khi weight/height/age thay đổi
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -498,7 +528,7 @@ Content-Type: application/json
 DELETE /user-profiles/:id
 ```
 
-**Mô tả**: Xóa profile của user
+**Mô tả**: Xóa profile của user (Admin)
 
 **Params**:
 | Tên | Kiểu | Bắt buộc | Mô tả |
@@ -506,8 +536,78 @@ DELETE /user-profiles/:id
 | id | number | ✅ | ID của profile |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
+```
+
+**Response** (204 No Content)
+
+---
+
+### 2.7 User tự xem Profile của mình
+
+```
+GET /user-profiles
+```
+
+**Mô tả**: User đăng nhập tự xem profile của chính mình
+
+**Headers**:
+
+```
+Authorization: Bearer <token>
+```
+
+**Response** (200 OK): _Giống 2.2_
+
+---
+
+### 2.8 User tự cập nhật Profile của mình
+
+```
+PATCH /user-profiles
+```
+
+**Mô tả**: User đăng nhập tự cập nhật profile của chính mình
+
+**Headers**:
+
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body** (tất cả tùy chọn):
+
+```json
+{
+  "age": 26,
+  "height": 171.0,
+  "weight": 66.5,
+  "gender": "MALE",
+  "activityLevel": "VERY_ACTIVE"
+}
+```
+
+**Tự động tính toán lại**: BMI, BMR, TDEE sẽ được tính lại khi weight/height/age thay đổi
+
+**Response** (200 OK): _Giống 2.5_
+
+---
+
+### 2.9 User tự xóa Profile của mình
+
+```
+DELETE /user-profiles
+```
+
+**Mô tả**: User đăng nhập tự xóa profile của chính mình
+
+**Headers**:
+
+```
+Authorization: Bearer <token>
 ```
 
 **Response** (204 No Content)
@@ -532,11 +632,13 @@ GET /user-allergies/user/:userId
 | userId | number | ✅ | ID của user |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
 
 **Response** (200 OK):
+
 ```json
 [
   {
@@ -571,11 +673,13 @@ GET /user-allergies/:id
 | id | number | ✅ | ID của user allergy |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -603,18 +707,20 @@ POST /user-allergies
 **Mô tả**: Thêm một chất gây dị ứng mới cho user
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
-  "userId": 1,                          // Bắt buộc - ID của user
-  "allergenId": 1,                      // Bắt buộc - ID của chất gây dị ứng
-  "severity": "HIGH",                   // Bắt buộc - Mức độ nghiêm trọng
-  "note": "Phản ứng nghiêm trọng"       // Tùy chọn - Ghi chú, tối đa 1000 ký tự
+  "userId": 1, // Bắt buộc - ID của user
+  "allergenId": 1, // Bắt buộc - ID của chất gây dị ứng
+  "severity": "HIGH", // Bắt buộc - Mức độ nghiêm trọng
+  "note": "Phản ứng nghiêm trọng" // Tùy chọn - Ghi chú, tối đa 1000 ký tự
 }
 ```
 
@@ -627,10 +733,12 @@ Content-Type: application/json
 | LIFE_THREATENING | Nguy hiểm tính mạng - Cấm tuyệt đối |
 
 **Validation**:
+
 - Mỗi user không thể có trùng `allergenId` (unique constraint)
 - Nếu thêm trùng sẽ báo lỗi 409 Conflict
 
 **Response** (201 Created):
+
 ```json
 {
   "id": 1,
@@ -660,12 +768,14 @@ PATCH /user-allergies/:id
 | id | number | ✅ | ID của user allergy |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 Content-Type: application/json
 ```
 
 **Request Body** (tất cả tùy chọn):
+
 ```json
 {
   "severity": "LIFE_THREATENING",
@@ -674,6 +784,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -701,6 +812,7 @@ DELETE /user-allergies/:id
 | id | number | ✅ | ID của user allergy |
 
 **Headers**:
+
 ```
 Authorization: Bearer <admin_token>
 ```
@@ -712,6 +824,7 @@ Authorization: Bearer <admin_token>
 ## 🔐 Authentication & Authorization
 
 ### Admin Token
+
 Tất cả API Admin yêu cầu JWT token với quyền admin:
 
 ```
@@ -722,16 +835,16 @@ Token phải chứa claim `isAdmin: true`
 
 ### Status Codes
 
-| Code | Ý nghĩa |
-|------|---------|
-| 200 | Thành công |
-| 201 | Tạo thành công |
-| 204 | Xóa thành công (no content) |
-| 400 | Bad Request - Dữ liệu không hợp lệ |
-| 401 | Unauthorized - Chưa đăng nhập |
-| 403 | Forbidden - Không có quyền admin |
-| 404 | Not Found - Không tìm thấy resource |
-| 409 | Conflict - Dữ liệu bị trùng (unique constraint) |
+| Code | Ý nghĩa                                         |
+| ---- | ----------------------------------------------- |
+| 200  | Thành công                                      |
+| 201  | Tạo thành công                                  |
+| 204  | Xóa thành công (no content)                     |
+| 400  | Bad Request - Dữ liệu không hợp lệ              |
+| 401  | Unauthorized - Chưa đăng nhập                   |
+| 403  | Forbidden - Không có quyền admin                |
+| 404  | Not Found - Không tìm thấy resource             |
+| 409  | Conflict - Dữ liệu bị trùng (unique constraint) |
 
 ---
 
@@ -757,5 +870,5 @@ Token phải chứa claim `isAdmin: true`
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: April 2026*
+_Document Version: 1.0_
+_Last Updated: April 2026_

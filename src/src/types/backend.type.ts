@@ -42,6 +42,27 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   };
 }
 
+export interface IBackendPaginatedResponse<T> {
+  metadata: {
+    statusCode: number;
+    message: string;
+    EC: number;
+    timestamp?: string;
+    path?: string;
+  };
+  data: {
+    EC: number;
+    EM: string;
+    meta: {
+      current: number;
+      pageSize: number;
+      pages: number;
+      total: number;
+    };
+    result: T[];
+  };
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    ERROR CODES
    ───────────────────────────────────────────────────────────────────────── */

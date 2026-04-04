@@ -1,6 +1,6 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -13,6 +13,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import * as React from "react";
+import { userService } from "@/services/userService";
+import { toast } from "sonner";
 
 interface User {
   id: number;
@@ -102,7 +105,6 @@ const columns: ColumnDef<User>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const user = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -128,25 +130,53 @@ const columns: ColumnDef<User>[] = [
   },
 ];
 
-const mockUsers: User[] = [
-  { id: 1, fullName: "Nguyễn Văn An", email: "an.nguyen@gmail.com", avatarUrl: null, isAdmin: true, status: true, dateOfBirth: "1990-05-15", createdAt: "2024-01-10T08:00:00Z" },
-  { id: 2, fullName: "Trần Thị Bích", email: "bich.tran@gmail.com", avatarUrl: null, isAdmin: false, status: true, dateOfBirth: "1995-09-22", createdAt: "2024-02-14T10:30:00Z" },
-  { id: 3, fullName: "Lê Minh Cường", email: "cuong.le@gmail.com", avatarUrl: null, isAdmin: false, status: false, dateOfBirth: "1988-12-01", createdAt: "2024-03-05T14:20:00Z" },
-  { id: 4, fullName: "Phạm Thùy Dung", email: "dung.pham@gmail.com", avatarUrl: null, isAdmin: false, status: true, dateOfBirth: "1993-07-30", createdAt: "2024-03-18T09:15:00Z" },
-  { id: 5, fullName: "Hoàng Đức Em", email: "em.hoang@gmail.com", avatarUrl: null, isAdmin: false, status: true, dateOfBirth: "2000-01-20", createdAt: "2024-04-01T16:45:00Z" },
-  { id: 6, fullName: "Võ Thiên Phúc", email: "phuc.vo@gmail.com", avatarUrl: null, isAdmin: true, status: true, dateOfBirth: "1992-11-11", createdAt: "2024-04-22T07:00:00Z" },
-  { id: 7, fullName: "Đặng Kim Oanh", email: "oanh.dang@gmail.com", avatarUrl: null, isAdmin: false, status: true, dateOfBirth: "1997-03-14", createdAt: "2024-05-10T12:30:00Z" },
-  { id: 8, fullName: "Bùi Quốc Hùng", email: "hung.bui@gmail.com", avatarUrl: null, isAdmin: false, status: false, dateOfBirth: "1985-08-05", createdAt: "2024-06-01T11:00:00Z" },
-];
-
 export default function UsersListPage() {
+  const [data, setData] = React.useState<User[]>([]);
+  const [, setLoading] = React.useState(true);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const fetchUsers = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await userService.getUsersPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize
+      );
+      if (res.data.EC === 0) {
+        setData(res.data.result as unknown as User[]);
+        setTotal(res.data.meta.total);
+        setPages(res.data.meta.pages);
+      } else {
+        toast.error(res.data.EM || "Không thể tải danh sách người dùng");
+      }
+    } catch (error) {
+      console.error("Fetch users error:", error);
+      toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   return (
     <div className="flex flex-col gap-6">
       <DataTable
         columns={columns}
-        data={mockUsers}
+        data={data}
         searchKey="fullName"
         searchPlaceholder="Tìm theo tên..."
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
         filterableColumns={[
           {
             id: "status",
