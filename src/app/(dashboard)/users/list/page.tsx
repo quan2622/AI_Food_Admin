@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import * as React from "react";
 import { userService } from "@/services/userService";
 import { toast } from "sonner";
+import { CreateUserDialog } from "@/components/users/create-user-dialog";
 
 interface User {
   id: number;
@@ -104,7 +105,7 @@ const columns: ColumnDef<User>[] = [
   {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => {
+    cell: () => {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -169,6 +170,7 @@ export default function UsersListPage() {
   return (
     <div className="flex flex-col gap-6">
       <DataTable
+        toolbarActions={<CreateUserDialog onSuccess={fetchUsers} />}
         columns={columns}
         data={data}
         searchKey="fullName"

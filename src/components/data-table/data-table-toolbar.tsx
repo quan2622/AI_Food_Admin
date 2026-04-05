@@ -32,6 +32,7 @@ interface DataTableToolbarProps<TData> {
     title: string;
     options: { label: string; value: string }[];
   }[];
+  toolbarActions?: React.ReactNode;
 }
 
 export function DataTableToolbar<TData>({
@@ -40,6 +41,7 @@ export function DataTableToolbar<TData>({
   searchKey,
   searchPlaceholder = "Tìm kiếm...",
   filterableColumns = [],
+  toolbarActions,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -152,6 +154,7 @@ export function DataTableToolbar<TData>({
             })}
         </DropdownMenuContent>
       </DropdownMenu>
+      {toolbarActions && <div>{toolbarActions}</div>}
     </div>
   );
 }

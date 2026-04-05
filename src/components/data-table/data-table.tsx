@@ -40,6 +40,7 @@ interface DataTableProps<TData, TValue> {
   rowCount?: number;
   pagination?: PaginationState;
   setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
+  toolbarActions?: React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -52,6 +53,7 @@ export function DataTable<TData, TValue>({
   rowCount,
   pagination: controlledPagination,
   setPagination: setControlledPagination,
+  toolbarActions,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -163,6 +165,7 @@ export function DataTable<TData, TValue>({
         searchKey={searchKey}
         searchPlaceholder={searchPlaceholder}
         filterableColumns={filterableColumns}
+        toolbarActions={toolbarActions}
       />
       <div className="rounded-xl border bg-card">
         <Table>
