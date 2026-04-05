@@ -12,11 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import * as React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { userService } from "@/services/userService";
 import { toast } from "sonner";
-import { CreateUserDialog } from "@/components/users/create-user-dialog";
+import { UserFormDialog } from "@/components/users/user-form-dialog";
+import { UserDetailDialog } from "@/components/users/user-detail-dialog";
+import { UserPlus } from "lucide-react";
 
 interface User {
   id: number;
@@ -27,6 +29,7 @@ interface User {
   status: boolean;
   dateOfBirth: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 const columns: ColumnDef<User>[] = [
@@ -103,9 +106,23 @@ const columns: ColumnDef<User>[] = [
     ),
   },
   {
+    accessorKey: "updatedAt",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Ngày cập nhật" />
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {row.getValue("updatedAt") 
+          ? new Date(row.getValue("updatedAt")).toLocaleDateString("vi-VN") 
+          : "—"}
+      </span>
+    ),
+  },
+  {
     id: "actions",
     enableHiding: false,
-    cell: () => {
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as any;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -114,10 +131,10 @@ const columns: ColumnDef<User>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => meta?.onAction("view", row.original)}>
               <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => meta?.onAction("edit", row.original)}>
               <Pencil className="mr-2 h-4 w-4" /> Chỉnh sửa
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -140,6 +157,20 @@ export default function UsersListPage() {
     pageIndex: 0,
     pageSize: 10,
   });
+
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [detailOpen, setDetailOpen] = React.useState(false);
+
+  const handleAction = React.useCallback((action: "view" | "edit", user: User) => {
+    setSelectedUser(user);
+    if (action === "view") setDetailOpen(true);
+    if (action === "edit") {
+      setFormMode("edit");
+      setFormOpen(true);
+    }
+  }, []);
 
   const fetchUsers = React.useCallback(async () => {
     try {
@@ -170,7 +201,18 @@ export default function UsersListPage() {
   return (
     <div className="flex flex-col gap-6">
       <DataTable
-        toolbarActions={<CreateUserDialog onSuccess={fetchUsers} />}
+        toolbarActions={
+          <Button onClick={() => {
+            setSelectedUser(null);
+            setFormMode("create");
+            setFormOpen(true);
+          }}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Tạo User mới
+          </Button>
+        }
+        defaultColumnVisibility={{ createdAt: false }}
+        meta={{ onAction: handleAction }}
         columns={columns}
         data={data}
         searchKey="fullName"
@@ -197,6 +239,18 @@ export default function UsersListPage() {
             ],
           },
         ]}
+      />
+      <UserFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        mode={formMode}
+        initialData={selectedUser}
+        onSuccess={fetchUsers}
+      />
+      <UserDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        user={selectedUser}
       />
     </div>
   );

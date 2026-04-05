@@ -41,6 +41,8 @@ interface DataTableProps<TData, TValue> {
   pagination?: PaginationState;
   setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
   toolbarActions?: React.ReactNode;
+  meta?: any;
+  defaultColumnVisibility?: VisibilityState;
 }
 
 export function DataTable<TData, TValue>({
@@ -54,10 +56,12 @@ export function DataTable<TData, TValue>({
   pagination: controlledPagination,
   setPagination: setControlledPagination,
   toolbarActions,
+  meta,
+  defaultColumnVisibility = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(defaultColumnVisibility);
   const [rowSelection, setRowSelection] = React.useState({});
   const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -155,6 +159,7 @@ export function DataTable<TData, TValue>({
     rowCount: rowCount,
     manualPagination: isManual,
     autoResetPageIndex: false,
+    meta,
   });
 
   return (
