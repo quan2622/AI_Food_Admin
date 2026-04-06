@@ -1,0 +1,466 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+provider = "prisma-client"
+output = "../src/generated/prisma"
+moduleFormat = "cjs"
+}
+
+datasource db {
+provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum GoalType {
+GOAL_LOSS
+GOAL_GAIN
+GOAL_MAINTAIN
+GOAL_STRICT
+}
+
+enum NutritionGoalStatus {
+NUTR_GOAL_ONGOING
+NUTR_GOAL_COMPLETED
+NUTR_GOAL_PAUSED
+NUTR_GOAL_FAILED
+}
+
+enum MealType {
+MEAL_BREAKFAST
+MEAL_LUNCH
+MEAL_DINNER
+MEAL_SNACK
+}
+
+enum StatusType {
+STATUS_BELOW
+STATUS_MET
+STATUS_ABOVE
+}
+
+enum SeverityType {
+SEV_LOW
+SEV_MEDIUM
+SEV_HIGH
+SEV_LIFE_THREATENING
+}
+
+enum ActivityLevel {
+ACT_SEDENTARY
+ACT_LIGHT
+ACT_MODERATE
+ACT_VERY
+ACT_SUPER
+}
+
+enum ReportType {
+REP_UPLOAD
+REP_POPULAR
+REP_TRAFFIC
+}
+
+enum SourceType {
+SRC_USDA
+SRC_MANUAL
+SRC_CALC
+}
+
+enum UnitType {
+UNIT_G
+UNIT_KG
+UNIT_MG
+UNIT_OZ
+UNIT_LB
+}
+
+enum GenderType {
+MALE
+FEMALE
+UNDEFINED
+}
+
+// ─── Models ─────────────────────────────────────────────────────────────────
+
+model AllCode {
+id Int @id @default(autoincrement())
+keyMap String @unique
+type String
+value String
+description String?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@map("all_codes")
+}
+
+model User {
+id Int @id @default(autoincrement())
+email String @unique
+password String
+avatarUrl String?
+fullName String
+accessToken String? @db.Text
+refreshToken String? @db.Text
+dateOfBirth DateTime?
+isAdmin Boolean @default(false)
+status Boolean @default(true)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+userProfile UserProfile?
+allergies UserAllergy[]
+nutritionGoals NutritionGoal[]
+dailyLogs DailyLog[]
+reports Report[]
+foodImages FoodImage[]
+workoutLogs WorkoutLog[]
+
+@@map("users")
+}
+
+model UserProfile {
+id Int @id @default(autoincrement())
+age Int
+height Float
+weight Float
+bmi Float
+bmr Float
+tdee Float
+gender GenderType @default(UNDEFINED)
+activityLevel String?
+userId Int @unique
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@map("user_profiles")
+}
+
+model NutritionGoal {
+id Int @id @default(autoincrement())
+goalType String
+status NutritionGoalStatus @default(NUTR_GOAL_ONGOING)
+targetWeight Float?
+targetCalories Float
+targetProtein Float
+targetCarbs Float
+targetFat Float
+targetFiber Float @default(0)
+startDate DateTime
+endDate DateTime
+userId Int
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@map("nutrition_goals")
+}
+
+model UserAllergy {
+id Int @id @default(autoincrement())
+severity String
+note String? @db.Text
+userId Int
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+allergenId Int
+allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Restrict)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@unique([userId, allergenId])
+@@map("user_allergies")
+}
+
+model Allergen {
+id Int @id @default(autoincrement())
+name String @unique
+description String?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+userAllergies UserAllergy[]
+ingredientAllergens IngredientAllergen[]
+
+@@map("allergens")
+}
+
+model Ingredient {
+id Int @id @default(autoincrement())
+ingredientName String
+description String?
+imageUrl String?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+foodIngredients FoodIngredient[]
+ingredientNutritions IngredientNutrition[]
+ingredientAllergens IngredientAllergen[]
+
+@@map("ingredients")
+}
+
+// ─── Food Domain ────────────────────────────────────────────────────────────
+
+model FoodCategory {
+id Int @id @default(autoincrement())
+name String @unique
+description String?
+parentId Int?
+parent FoodCategory? @relation("CategoryTree", fields: [parentId], references: [id])
+children FoodCategory[] @relation("CategoryTree")
+
+foods Food[]
+
+@@map("food_categories")
+}
+
+model Food {
+id Int @id @default(autoincrement())
+foodName String
+description String?
+imageUrl String?
+categoryId Int?
+foodCategory FoodCategory? @relation(fields: [categoryId], references: [id])
+defaultServingGrams Float? // Trọng lượng mặc định 1 phần ăn (ví dụ: 450g cho 1 tô Bún bò Huế)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+mealItems MealItem[]
+foodIngredients FoodIngredient[]
+nutritionProfile FoodNutritionProfile?
+
+@@index([foodName])
+@@map("foods")
+}
+
+/// Represents the nutritional profile for a Food, normalized to per 100g.
+model FoodNutritionProfile {
+id Int @id @default(autoincrement())
+source String @default("SRC_MANUAL")
+isCalculated Boolean @default(false)
+foodId Int
+food Food @relation(fields: [foodId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+values FoodNutritionValue[]
+
+@@unique([foodId])
+@@map("food_nutrition_profiles")
+}
+
+/// The actual value of a nutrient for a given FoodNutritionProfile record.
+model FoodNutritionValue {
+id Int @id @default(autoincrement())
+value Float
+foodNutritionProfileId Int
+foodNutritionProfile FoodNutritionProfile @relation(fields: [foodNutritionProfileId], references: [id], onDelete: Cascade)
+nutrientId Int
+nutrient Nutrient @relation(fields: [nutrientId], references: [id], onDelete: Restrict)
+
+@@unique([foodNutritionProfileId, nutrientId])
+@@map("food_nutrition_values")
+}
+
+/// Represents a specific nutritional profile for an ingredient (e.g., per 100g serving).
+model IngredientNutrition {
+id Int @id @default(autoincrement())
+servingSize Float
+servingUnit String @default("UNIT_G")
+source String @default("SRC_MANUAL")
+isCalculated Boolean @default(false)
+ingredientId Int
+ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+values NutritionValue[]
+
+@@map("ingredient_nutritions")
+}
+
+/// A single nutrient (e.g., Protein, Fat, Carbohydrates).
+model Nutrient {
+id Int @id @default(autoincrement())
+name String @unique
+unit String
+
+values NutritionValue[]
+foodValues FoodNutritionValue[]
+
+@@map("nutrients")
+}
+
+/// The actual value of a nutrient for a given IngredientNutrition record.
+model NutritionValue {
+id Int @id @default(autoincrement())
+value Float
+ingredientNutritionId Int
+ingredientNutrition IngredientNutrition @relation(fields: [ingredientNutritionId], references: [id], onDelete: Cascade)
+nutrientId Int
+nutrient Nutrient @relation(fields: [nutrientId], references: [id], onDelete: Restrict)
+
+@@unique([ingredientNutritionId, nutrientId])
+@@map("nutrition_values")
+}
+
+/// Represents the composition of a Food (which ingredients it contains).
+model FoodIngredient {
+id Int @id @default(autoincrement())
+quantityGrams Float
+foodId Int
+food Food @relation(fields: [foodId], references: [id], onDelete: Cascade)
+ingredientId Int
+ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@unique([foodId, ingredientId])
+@@map("food_ingredients")
+}
+
+/// Represents the relationship between an Ingredient and an Allergen.
+model IngredientAllergen {
+id Int @id @default(autoincrement())
+ingredientId Int
+ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+allergenId Int
+allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@unique([ingredientId, allergenId])
+@@map("ingredient_allergens")
+}
+
+// ─── Daily Tracking ──────────────────────────────────────────────────────────
+
+model DailyLog {
+id Int @id @default(autoincrement())
+logDate DateTime @db.Date
+status String @default("STATUS_BELOW")
+userId Int
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+meals Meal[]
+
+@@unique([userId, logDate])
+@@map("daily_logs")
+}
+
+model Meal {
+id Int @id @default(autoincrement())
+mealType String
+mealDateTime DateTime
+dailyLogId Int
+dailyLog DailyLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+mealItems MealItem[]
+foodImages FoodImage[]
+
+@@map("meals")
+}
+
+model MealItem {
+id Int @id @default(autoincrement())
+quantity Float // Số lượng món ăn (ví dụ: 1 tô, 2 phần)
+grams Float // Trọng lượng thực tế tính bằng gram (để tính dinh dưỡng)
+calories Float @default(0)
+protein Float @default(0)
+carbs Float @default(0)
+fat Float @default(0)
+fiber Float @default(0)
+foodId Int
+food Food @relation(fields: [foodId], references: [id], onDelete: Restrict)
+mealId Int
+meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@map("meal_items")
+}
+
+model FoodImage {
+id Int @id @default(autoincrement())
+imageUrl String
+fileName String?
+mimeType String?
+fileSize Int?
+uploadedAt DateTime @default(now())
+userId Int
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+mealId Int
+meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+@@map("food_images")
+}
+
+model WorkoutLog {
+id Int @id @default(autoincrement())
+userId Int
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+workoutType String
+durationMinute Int?
+burnedCalories Float @default(0)
+startedAt DateTime
+endedAt DateTime?
+source String?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@map("workout_logs")
+}
+
+// ─── Reports ─────────────────────────────────────────────────────────────────
+
+model Report {
+id Int @id @default(autoincrement())
+reportType String
+generatedAt DateTime
+timeRangeStart DateTime
+timeRangeEnd DateTime
+data String @db.Text
+userId Int
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@map("reports")
+}
+
+// ─── AI ──────────────────────────────────────────────────────────────────────
+
+model AIModel {
+id Int @id @default(autoincrement())
+version String
+accuracy Decimal
+loss Decimal
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+jobs AITrainingJob[]
+
+@@map("ai_models")
+}
+
+model AITrainingJob {
+id Int @id @default(autoincrement())
+startedAt DateTime
+finishedAt DateTime?
+status String
+modelId Int
+model AIModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@map("ai_training_jobs")
+}

@@ -1,28 +1,34 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import React, { useMemo } from "react";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { MoreHorizontal, Pencil, Eye, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Eye, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { foodService } from "@/services/foodService";
+import { IFood } from "@/types/food.type";
+import { FoodDetailDialog } from "@/components/foods/food-detail-dialog";
+import { FoodFormDialog } from "@/components/foods/food-form-dialog";
 
-interface Food {
-  id: number;
-  foodName: string;
-  description: string | null;
-  imageUrl: string | null;
-  categoryName: string | null;
-  defaultServingGrams: number | null;
-  createdAt: string;
-}
-
-const columns: ColumnDef<Food>[] = [
+const columns: ColumnDef<IFood>[] = [
   {
     accessorKey: "id",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
-    cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="ID" />
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground font-mono text-xs">
+        #{row.getValue("id")}
+      </span>
+    ),
     enableHiding: false,
   },
   {
@@ -33,31 +39,49 @@ const columns: ColumnDef<Food>[] = [
       return url ? (
         <img src={url} alt="" className="h-10 w-10 rounded-lg object-cover" />
       ) : (
-        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">N/A</div>
+        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs text-center border">
+          N/A
+        </div>
       );
     },
     enableSorting: false,
   },
   {
     accessorKey: "foodName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Tên món ăn" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("foodName")}</span>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Tên món ăn" />
+    ),
+    cell: ({ row }) => (
+      <span className="font-medium">{row.getValue("foodName")}</span>
+    ),
   },
   {
-    accessorKey: "categoryName",
+    id: "categoryName",
+    accessorFn: (row) => row.foodCategory?.name,
     header: "Danh mục",
     cell: ({ row }) => {
-      const cat = row.getValue("categoryName") as string | null;
-      return cat ? <span className="text-sm">{cat}</span> : <span className="text-muted-foreground">—</span>;
+      const cat = row.original.foodCategory?.name;
+      return cat ? (
+        <span className="text-sm rounded-md bg-secondary/50 px-2 py-1">
+          {cat}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
     },
-    filterFn: (row, id, value) => row.getValue(id) === value,
   },
   {
     accessorKey: "defaultServingGrams",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Khẩu phần (g)" />,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Khẩu phần" />
+    ),
     cell: ({ row }) => {
       const g = row.getValue("defaultServingGrams") as number | null;
-      return g ? <span>{g}g</span> : <span className="text-muted-foreground">—</span>;
+      return g ? (
+        <span>{g}g</span>
+      ) : (
+        <span className="text-muted-foreground text-xs italic">0g</span>
+      );
     },
   },
   {
@@ -65,48 +89,183 @@ const columns: ColumnDef<Food>[] = [
     header: "Mô tả",
     cell: ({ row }) => {
       const d = row.getValue("description") as string | null;
-      return d ? <span className="text-sm max-w-[250px] truncate block">{d}</span> : <span className="text-muted-foreground">—</span>;
+      return d ? (
+        <span className="text-sm max-w-[250px] truncate block text-muted-foreground">
+          {d}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
     },
   },
   {
     accessorKey: "createdAt",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
-    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("createdAt")).toLocaleDateString("vi-VN")}</span>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Ngày tạo" />
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {new Date(row.getValue("createdAt") || "").toLocaleDateString("vi-VN")}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "updatedAt",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Ngày chỉnh sửa" />
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {new Date(row.getValue("updatedAt") || "").toLocaleDateString("vi-VN")}
+      </span>
+    ),
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> Xem</DropdownMenuItem>
-          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as any;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => meta?.onAction("view", row.original)}
+            >
+              <Eye className="mr-2 h-4 w-4 text-blue-500" /> Xem chi tiết
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => meta?.onAction("edit", row.original)}
+            >
+              <Pencil className="mr-2 h-4 w-4 text-orange-500" /> Cập nhật
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive font-medium focus:bg-destructive focus:text-destructive-foreground"
+              onClick={() => meta?.onAction("delete", row.original)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Xóa
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 
-const mockData: Food[] = [
-  { id: 1, foodName: "Phở bò", description: "Phở bò truyền thống Hà Nội", imageUrl: null, categoryName: "Món nước", defaultServingGrams: 500, createdAt: "2024-01-10T08:00:00Z" },
-  { id: 2, foodName: "Bún bò Huế", description: "Bún bò đặc sản Huế", imageUrl: null, categoryName: "Món nước", defaultServingGrams: 450, createdAt: "2024-01-12T09:00:00Z" },
-  { id: 3, foodName: "Cơm tấm sườn", description: "Cơm tấm sườn nướng", imageUrl: null, categoryName: "Cơm", defaultServingGrams: 400, createdAt: "2024-01-15T10:00:00Z" },
-  { id: 4, foodName: "Bánh mì thịt", description: "Bánh mì Sài Gòn", imageUrl: null, categoryName: "Bánh", defaultServingGrams: 250, createdAt: "2024-02-01T08:00:00Z" },
-  { id: 5, foodName: "Gỏi cuốn", description: "Gỏi cuốn tôm thịt", imageUrl: null, categoryName: "Khai vị", defaultServingGrams: 200, createdAt: "2024-02-10T11:00:00Z" },
-  { id: 6, foodName: "Bò lúc lắc", description: "Bò xào khoai tây", imageUrl: null, categoryName: "Món khô", defaultServingGrams: 350, createdAt: "2024-03-05T14:00:00Z" },
-];
-
 export default function FoodsListPage() {
+  const [data, setData] = React.useState<IFood[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [loading, setLoading] = React.useState(true);
+
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [selectedFood, setSelectedFood] = React.useState<IFood | null>(null);
+  const [detailOpen, setDetailOpen] = React.useState(false);
+  const [formOpen, setFormOpen] = React.useState(false);
+
+  const fetchFoods = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      // Backend uses current = pageIndex + 1
+      const res = await foodService.getAdminFoodsPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+      );
+
+      if (res.data?.result) {
+        setData(res.data.result);
+        setTotal(res.data.meta?.total || 0);
+      } else {
+        setData([]);
+        setTotal(0);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Không thể tải danh sách thực phẩm");
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchFoods();
+  }, [fetchFoods]);
+
+  const handleAction = React.useCallback(
+    async (action: "view" | "edit" | "delete", payload: IFood) => {
+      if (action === "view") {
+        setSelectedFood(payload);
+        setDetailOpen(true);
+      }
+      if (action === "edit") {
+        setSelectedFood(payload);
+        setFormOpen(true);
+      }
+      if (action === "delete") {
+        if (
+          window.confirm(`Bạn có chắc chắn muốn xóa món: ${payload.foodName}?`)
+        ) {
+          try {
+            await foodService.deleteFood(payload.id);
+            toast.success("Xóa thành công");
+            fetchFoods();
+          } catch (e: any) {
+            toast.error(
+              e?.response?.data?.message ||
+                "Xóa thất bại. Món ăn này có thể đang ràng buộc với dữ liệu liên quan (RESTRICT).",
+            );
+          }
+        }
+      }
+    },
+    [fetchFoods],
+  );
+
   return (
-    <div className="flex flex-col gap-6">
-      <DataTable
-        columns={columns}
-        data={mockData}
-        searchKey="foodName"
-        searchPlaceholder="Tìm theo tên món ăn..."
+    <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+      <div className="bg-background rounded-lg">
+        <DataTable
+          columns={columns}
+          data={data}
+          pageCount={Math.ceil(total / pagination.pageSize)}
+          pagination={pagination}
+          setPagination={setPagination}
+          searchKey="foodName"
+          searchPlaceholder="Tìm theo tên món ăn..."
+          meta={{ onAction: handleAction }}
+          defaultColumnVisibility={{ description: false, createdAt: false }}
+          toolbarActions={
+            <Button
+              onClick={() => {
+                setSelectedFood(null);
+                setFormOpen(true);
+              }}
+              className="shadow-sm h-8"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Thêm mới
+            </Button>
+          }
+        />
+      </div>
+
+      <FoodDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        food={selectedFood}
+      />
+      <FoodFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initialData={selectedFood}
+        onSuccess={fetchFoods}
       />
     </div>
   );
