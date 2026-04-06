@@ -1,6 +1,6 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { MoreHorizontal, Pencil, Eye, Trash2 } from "lucide-react";
@@ -12,11 +12,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as React from "react";
+import { userProfileService } from "@/services/userProfileService";
+import { toast } from "sonner";
+import { UserProfileFormDialog } from "@/components/users/user-profile-form-dialog";
+import { UserProfileDetailDialog } from "@/components/users/user-profile-detail-dialog";
 
 interface UserProfile {
   id: number;
   userId: number;
-  userName: string;
+  user?: {
+    id: number;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+  };
   age: number;
   height: number;
   weight: number;
@@ -25,6 +35,11 @@ interface UserProfile {
   tdee: number;
   gender: string | null;
   activityLevel: string | null;
+  activityLevelData?: {
+    id: number;
+    levelName: string;
+    description: string;
+  } | null;
 }
 
 const activityLevelMap: Record<string, string> = {
@@ -43,9 +58,13 @@ const columns: ColumnDef<UserProfile>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "userName",
+    id: "userName",
+    accessorFn: (row) => row.user?.fullName,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Người dùng" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("userName")}</span>,
+    cell: ({ row }) => {
+      const fullName = row.getValue("userName") as string || "—";
+      return <span className="font-medium">{fullName}</span>;
+    },
   },
   {
     accessorKey: "age",
@@ -55,13 +74,12 @@ const columns: ColumnDef<UserProfile>[] = [
     accessorKey: "gender",
     header: "Giới tính",
     cell: ({ row }) => {
-      const g = row.getValue("gender") as string | null;
-      return g ? (
-        <StatusBadge variant={g === "male" ? "info" : "warning"}>
-          {g === "male" ? "Nam" : "Nữ"}
+      let g = row.getValue("gender") as string | null;
+      if (!g || g === "NULL") g = "OTHER";
+      return (
+        <StatusBadge variant={g === "MALE" ? "info" : g === "FEMALE" ? "warning" : "default"}>
+          {g === "MALE" ? "Nam" : (g === "FEMALE" ? "Nữ" : "Khác")}
         </StatusBadge>
-      ) : (
-        <span className="text-muted-foreground">—</span>
       );
     },
   },
@@ -99,44 +117,126 @@ const columns: ColumnDef<UserProfile>[] = [
     header: "Mức vận động",
     cell: ({ row }) => {
       const level = row.getValue("activityLevel") as string | null;
-      return level ? <StatusBadge variant="info">{activityLevelMap[level] ?? level}</StatusBadge> : <span className="text-muted-foreground">—</span>;
+      const actData = row.original.activityLevelData;
+      const displayLabel = actData?.description || actData?.levelName || activityLevelMap[level || ""] || level;
+      return displayLabel ? <StatusBadge variant="info">{displayLabel}</StatusBadge> : <span className="text-muted-foreground">—</span>;
     },
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> Xem</DropdownMenuItem>
-          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as any;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => meta?.onAction("view", row.original)}><Eye className="mr-2 h-4 w-4" /> Xem chi tiết</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => meta?.onAction("edit", row.original)}><Pencil className="mr-2 h-4 w-4" /> Cập nhật</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 
-const mockData: UserProfile[] = [
-  { id: 1, userId: 1, userName: "Nguyễn Văn An", age: 34, height: 170, weight: 68, bmi: 23.5, bmr: 1650, tdee: 2310, gender: "male", activityLevel: "ACT_MODERATE" },
-  { id: 2, userId: 2, userName: "Trần Thị Bích", age: 29, height: 158, weight: 52, bmi: 20.8, bmr: 1320, tdee: 1716, gender: "female", activityLevel: "ACT_LIGHT" },
-  { id: 3, userId: 3, userName: "Lê Minh Cường", age: 36, height: 175, weight: 82, bmi: 26.8, bmr: 1800, tdee: 2790, gender: "male", activityLevel: "ACT_VERY" },
-  { id: 4, userId: 4, userName: "Phạm Thùy Dung", age: 31, height: 162, weight: 55, bmi: 20.9, bmr: 1380, tdee: 1932, gender: "female", activityLevel: "ACT_MODERATE" },
-  { id: 5, userId: 5, userName: "Hoàng Đức Em", age: 24, height: 180, weight: 75, bmi: 23.1, bmr: 1780, tdee: 2492, gender: "male", activityLevel: "ACT_MODERATE" },
-];
-
 export default function UserProfilesPage() {
+  const [data, setData] = React.useState<UserProfile[]>([]);
+  const [, setLoading] = React.useState(true);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  
+  const [selectedProfile, setSelectedProfile] = React.useState<UserProfile | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [detailOpen, setDetailOpen] = React.useState(false);
+
+  const fetchProfiles = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await userProfileService.getAdminProfilesPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize
+      );
+      if (res.data?.EC === 0) {
+        setData(res.data.result as unknown as UserProfile[]);
+        setTotal(res.data.meta.total);
+        setPages(res.data.meta.pages);
+      } else {
+        toast.error(res.data?.EM || "Không thể tải danh sách profiles");
+      }
+    } catch (error) {
+      console.error("Fetch profiles error:", error);
+      toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
+
+  const handleAction = React.useCallback((action: "view" | "edit", profile: UserProfile) => {
+    setSelectedProfile(profile);
+    if (action === "view") setDetailOpen(true);
+    if (action === "edit") setFormOpen(true);
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
       <DataTable
         columns={columns}
-        data={mockData}
+        data={data}
         searchKey="userName"
         searchPlaceholder="Tìm theo tên..."
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
+        meta={{ onAction: handleAction }}
+        filterableColumns={[
+          {
+            id: "gender",
+            title: "Giới tính",
+            options: [
+              { label: "Nam", value: "MALE" },
+              { label: "Nữ", value: "FEMALE" },
+              { label: "Khác", value: "OTHER" },
+            ],
+          },
+          {
+            id: "activityLevel",
+            title: "Vận động",
+            options: [
+              { label: "Ít vận động", value: "SEDENTARY" },
+              { label: "Nhẹ nhàng", value: "LIGHTLY_ACTIVE" },
+              { label: "Trung bình", value: "MODERATELY_ACTIVE" },
+              { label: "Năng động", value: "VERY_ACTIVE" },
+              { label: "Rất năng động", value: "SUPER_ACTIVE" },
+            ],
+          },
+        ]}
+      />
+
+      <UserProfileFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initialData={selectedProfile}
+        onSuccess={fetchProfiles}
+      />
+
+      <UserProfileDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        profile={selectedProfile}
       />
     </div>
   );

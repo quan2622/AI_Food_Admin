@@ -1,21 +1,37 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { userAllergyService } from "@/services/userAllergyService";
+import { toast } from "sonner";
+import { UserAllergyDetailDialog } from "@/components/users/user-allergy-detail-dialog";
 
-interface UserAllergy {
-  id: number;
-  userName: string;
-  allergenName: string;
-  severity: string;
-  note: string | null;
-  createdAt: string;
+interface UserAllergyGroup {
+  userId: number;
+  user: {
+    id: number;
+    email: string;
+    fullName: string;
+    avatarUrl: string | null;
+  };
+  allergies: Array<{
+    id: number;
+    severity: string;
+    note: string | null;
+    allergenId: number;
+    allergen: {
+      id: number;
+      name: string;
+      description: string | null;
+    };
+  }>;
 }
 
 const severityMap: Record<string, { label: string; variant: "success" | "warning" | "danger" | "info" }> = {
@@ -25,90 +41,138 @@ const severityMap: Record<string, { label: string; variant: "success" | "warning
   SEV_LIFE_THREATENING: { label: "Nguy hiểm", variant: "danger" },
 };
 
-const columns: ColumnDef<UserAllergy>[] = [
+const columns: ColumnDef<UserAllergyGroup>[] = [
   {
-    accessorKey: "id",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
-    cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>,
+    accessorKey: "userId",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="ID User" />,
+    cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">#{row.getValue("userId")}</span>,
     enableHiding: false,
   },
   {
-    accessorKey: "userName",
+    id: "userName",
+    accessorFn: (row) => row.user?.fullName || row.user?.email,
     header: ({ column }) => <DataTableColumnHeader column={column} title="Người dùng" />,
     cell: ({ row }) => <span className="font-medium">{row.getValue("userName")}</span>,
   },
   {
-    accessorKey: "allergenName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Chất gây dị ứng" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("allergenName")}</span>,
-  },
-  {
-    accessorKey: "severity",
-    header: "Mức độ",
+    id: "allergiesList",
+    header: "Danh sách dị ứng",
     cell: ({ row }) => {
-      const sev = row.getValue("severity") as string;
-      const info = severityMap[sev] ?? { label: sev, variant: "muted" as const };
-      return <StatusBadge variant={info.variant}>{info.label}</StatusBadge>;
+      const allergies = row.original.allergies || [];
+      if (allergies.length === 0) return <span className="text-muted-foreground text-sm">Không có</span>;
+
+      const displayCount = 3;
+      const visible = allergies.slice(0, displayCount);
+      const hiddenCount = allergies.length - displayCount;
+
+      return (
+        <div className="flex flex-wrap gap-2">
+          {visible.map((a) => {
+            const sev = severityMap[a.severity] ?? { label: a.severity, variant: "muted" };
+            return (
+              <StatusBadge key={a.id} variant={sev.variant} className="text-xs">
+                {a.allergen?.name} ({sev.label})
+              </StatusBadge>
+            );
+          })}
+          {hiddenCount > 0 && (
+            <StatusBadge variant="default" className="text-xs capitalize">
+              +{hiddenCount} loại khác...
+            </StatusBadge>
+          )}
+        </div>
+      );
     },
-    filterFn: (row, id, value) => row.getValue(id) === value,
-  },
-  {
-    accessorKey: "note",
-    header: "Ghi chú",
-    cell: ({ row }) => {
-      const note = row.getValue("note") as string | null;
-      return note ? <span className="text-sm max-w-[200px] truncate block">{note}</span> : <span className="text-muted-foreground">—</span>;
-    },
-  },
-  {
-    accessorKey: "createdAt",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
-    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("createdAt")).toLocaleDateString("vi-VN")}</span>,
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as any;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => meta?.onAction("view", row.original)}>
+              <Eye className="mr-2 h-4 w-4" /> Xem chi tiết
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" /> Xóa
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 
-const mockData: UserAllergy[] = [
-  { id: 1, userName: "Nguyễn Văn An", allergenName: "Đậu phộng", severity: "SEV_HIGH", note: "Phản ứng nặng, cần mang EpiPen", createdAt: "2024-01-15T08:00:00Z" },
-  { id: 2, userName: "Trần Thị Bích", allergenName: "Sữa", severity: "SEV_MEDIUM", note: "Không dung nạp lactose", createdAt: "2024-02-20T10:00:00Z" },
-  { id: 3, userName: "Lê Minh Cường", allergenName: "Gluten", severity: "SEV_LOW", note: null, createdAt: "2024-03-10T14:00:00Z" },
-  { id: 4, userName: "Phạm Thùy Dung", allergenName: "Hải sản", severity: "SEV_LIFE_THREATENING", note: "Sốc phản vệ", createdAt: "2024-04-05T09:00:00Z" },
-  { id: 5, userName: "Hoàng Đức Em", allergenName: "Trứng", severity: "SEV_LOW", note: null, createdAt: "2024-05-12T16:00:00Z" },
-];
-
 export default function UserAllergiesPage() {
+  const [data, setData] = React.useState<UserAllergyGroup[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  
+  const [selectedGroup, setSelectedGroup] = React.useState<UserAllergyGroup | null>(null);
+  const [detailOpen, setDetailOpen] = React.useState(false);
+
+  const fetchAllergies = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await userAllergyService.getAdminAllergiesPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize
+      );
+      if (res.data?.EC === 0) {
+        setData(res.data.result as unknown as UserAllergyGroup[]);
+        setTotal(res.data.meta.total);
+        setPages(res.data.meta.pages);
+      } else {
+        toast.error(res.data?.EM || "Không thể tải danh sách dị ứng");
+      }
+    } catch (error) {
+      console.error("Fetch allergies error:", error);
+      toast.error("Đã xảy ra lỗi kết nối");
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchAllergies();
+  }, [fetchAllergies]);
+
+  const handleAction = React.useCallback((action: "view", payload: UserAllergyGroup) => {
+    if (action === "view") {
+      setSelectedGroup(payload);
+      setDetailOpen(true);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
       <DataTable
         columns={columns}
-        data={mockData}
+        data={data}
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
         searchKey="userName"
         searchPlaceholder="Tìm theo tên người dùng..."
-        filterableColumns={[
-          {
-            id: "severity",
-            title: "Mức độ",
-            options: [
-              { label: "Nhẹ", value: "SEV_LOW" },
-              { label: "Trung bình", value: "SEV_MEDIUM" },
-              { label: "Nặng", value: "SEV_HIGH" },
-              { label: "Nguy hiểm", value: "SEV_LIFE_THREATENING" },
-            ],
-          },
-        ]}
+        meta={{ onAction: handleAction }}
+      />
+      
+      <UserAllergyDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        payload={selectedGroup}
       />
     </div>
   );

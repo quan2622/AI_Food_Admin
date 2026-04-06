@@ -4,7 +4,7 @@
  * ========================================================================== */
 
 import privateAxios from "@/lib/privateAxios";
-import { ApiResponse } from "@/types/backend.type";
+import { ApiResponse, IBackendPaginatedResponse } from "@/types/backend.type";
 import {
   ICreateUserAllergyRequest,
   IUpdateUserAllergyRequest,
@@ -24,6 +24,19 @@ export const userAllergyService = {
       `/user-allergies/user/${userId}`
     );
     return res as unknown as ApiResponse<IUserAllergy[]>;
+  },
+
+  /**
+   * Lấy danh sách allergies của tất cả users (Admin) có phân trang
+   */
+  getAdminAllergiesPaginated: async (
+    current: number = 1,
+    pageSize: number = 10
+  ): Promise<IBackendPaginatedResponse<any>> => {
+    const res = await privateAxios.get<IBackendPaginatedResponse<any>>(
+      `/user-allergies/admin?current=${current}&pageSize=${pageSize}`
+    );
+    return res as unknown as IBackendPaginatedResponse<any>;
   },
 
   /**

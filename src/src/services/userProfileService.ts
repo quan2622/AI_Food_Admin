@@ -4,7 +4,7 @@
  * ========================================================================== */
 
 import privateAxios from "@/lib/privateAxios";
-import { ApiResponse } from "@/types/backend.type";
+import { ApiResponse, IBackendPaginatedResponse } from "@/types/backend.type";
 import {
   ICreateUserProfileRequest,
   IUpdateUserProfileRequest,
@@ -21,6 +21,19 @@ export const userProfileService = {
       "/user-profiles/all"
     );
     return res as unknown as ApiResponse<IUserProfile[]>;
+  },
+
+  /**
+   * Lấy danh sách user profiles cho Admin có phân trang
+   */
+  getAdminProfilesPaginated: async (
+    current: number = 1,
+    pageSize: number = 10
+  ): Promise<IBackendPaginatedResponse<IUserProfile>> => {
+    const res = await privateAxios.get<IBackendPaginatedResponse<IUserProfile>>(
+      `/user-profiles/admin?current=${current}&pageSize=${pageSize}`
+    );
+    return res as unknown as IBackendPaginatedResponse<IUserProfile>;
   },
 
   /**
