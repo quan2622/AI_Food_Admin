@@ -11,7 +11,7 @@ Tài liệu API dành cho Admin để quản lý Thực phẩm (Món ăn, Phân 
 ## 📋 Mục lục
 
 1. [Món ăn (Foods)](#1-món-ăn-foods) — gồm `GET /foods/admin`
-2. [Phân loại (Categories)](#2-phân-loại-categories)
+2. [Phân loại (Categories)](#2-phân-loại-categories) — gồm `GET /food-categories/admin`
 3. [Ảnh thực phẩm (Food Images)](#3-ảnh-thực-phẩm-food-images) — gồm `GET /food-images/admin`
 
 ---
@@ -44,7 +44,7 @@ Authorization: Bearer <admin_token>
 | `pageSize` | number | Số món mỗi trang                                                                                                   |
 | (khác)     | —      | Lọc / sort theo [api-query-params](https://github.com/koajs/aqp) — đưa vào `filter`, `sort` như `GET /users/admin` |
 
-**Sort mặc định (khi không gửi sort):** `createdAt` giảm dần.
+**Sort mặc định (khi không gửi sort):** `updatedAt` giảm dần.
 
 **Ví dụ:**
 
@@ -507,7 +507,7 @@ GET /food-categories/admin?current=1&pageSize=10&...
 | `pageSize` | number | Số bản ghi mỗi trang                                                                                   |
 | (khác)     | —      | Filter / sort theo [api-query-params](https://github.com/koajs/aqp), ví dụ `name=/món/i`, `sort=-name` |
 
-**Sort mặc định:** `name` tăng dần.
+**Sort mặc định:** `updatedAt` giảm dần (mới cập nhật lên trước).
 
 **Ví dụ:**
 
@@ -534,6 +534,8 @@ GET /api/v1/food-categories/admin?current=1&pageSize=10&name=/món/i&sort=-name
       "name": "Món nước",
       "description": "Các món có nước dùng",
       "parentId": null,
+      "createdAt": "2026-04-07T14:59:50.101Z",
+      "updatedAt": "2026-04-07T14:59:50.101Z",
       "parent": null,
       "children": [
         { "id": 2, "name": "Phở" },
@@ -564,6 +566,8 @@ GET /food-categories
     "name": "Món nước",
     "description": "Các món có nước dùng",
     "parentId": null,
+    "createdAt": "2026-04-07T14:59:50.101Z",
+    "updatedAt": "2026-04-07T14:59:50.101Z",
     "children": [
       {
         "id": 2,
@@ -596,6 +600,8 @@ GET /food-categories/roots
     "name": "Món nước",
     "description": "Các món có nước dùng",
     "parentId": null,
+    "createdAt": "2026-04-07T14:59:50.101Z",
+    "updatedAt": "2026-04-07T14:59:50.101Z",
     "foodCount": 12
   },
   {
@@ -603,6 +609,8 @@ GET /food-categories/roots
     "name": "Món cơm",
     "description": "Các món ăn với cơm",
     "parentId": null,
+    "createdAt": "2026-04-07T14:59:50.101Z",
+    "updatedAt": "2026-04-07T14:59:50.101Z",
     "foodCount": 8
   }
 ]
@@ -631,6 +639,8 @@ GET /food-categories/:id
   "name": "Món nước",
   "description": "Các món có nước dùng",
   "parentId": null,
+  "createdAt": "2026-04-07T14:59:50.101Z",
+  "updatedAt": "2026-04-07T14:59:50.101Z",
   "children": [
     { "id": 2, "name": "Phở", "description": "...", "parentId": 1 },
     { "id": 3, "name": "Bún", "description": "...", "parentId": 1 }
@@ -663,6 +673,8 @@ GET /food-categories/:id/children
     "name": "Phở",
     "description": "Các loại phở",
     "parentId": 1,
+    "createdAt": "2026-04-07T14:59:50.101Z",
+    "updatedAt": "2026-04-07T14:59:50.101Z",
     "foodCount": 7
   },
   {
@@ -670,6 +682,8 @@ GET /food-categories/:id/children
     "name": "Bún",
     "description": "Các loại bún",
     "parentId": 1,
+    "createdAt": "2026-04-07T14:59:50.101Z",
+    "updatedAt": "2026-04-07T14:59:50.101Z",
     "foodCount": 5
   }
 ]
@@ -818,6 +832,8 @@ GET /food-images/admin?current=1&pageSize=10&...
 ```
 
 **Mô tả:** `AdminGuard`. Lọc/sort theo [api-query-params](https://github.com/koajs/aqp).
+
+**Sort mặc định:** `uploadedAt` giảm dần (model `FoodImage` không có `updatedAt`).
 
 **Response** (trong `data`): `{ EC, EM, meta, result }`.
 

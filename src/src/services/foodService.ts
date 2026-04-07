@@ -115,4 +115,25 @@ export const foodService = {
     );
     return res as unknown as ApiResponse<null>;
   },
+
+  /**
+   * Lấy danh sách Ảnh thực phẩm (Admin) có phân trang
+   */
+  getFoodImagesPaginated: async (
+    current: number = 1,
+    pageSize: number = 10
+  ): Promise<IBackendPaginatedResponse<any>> => {
+    const res = await privateAxios.get<IBackendPaginatedResponse<any>>(
+      `/food-images/admin?current=${current}&pageSize=${pageSize}`
+    );
+    return res as unknown as IBackendPaginatedResponse<any>;
+  },
+
+  /**
+   * Xóa ảnh
+   */
+  deleteFoodImage: async (id: number): Promise<ApiResponse<null>> => {
+    const res = await privateAxios.delete<ApiResponse<null>>(`/food-images/${id}`);
+    return res as unknown as ApiResponse<null>;
+  },
 };
