@@ -1,24 +1,22 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { MoreHorizontal, Pencil, Eye, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { ingredientService } from "@/services/ingredientService";
+import type { IIngredient } from "@/types/ingredient.type";
+import { IngredientFormDialog } from "@/components/ingredients/ingredient-form-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImagePreviewDialog } from "@/components/image-preview-dialog";
 
-interface Ingredient {
-  id: number;
-  ingredientName: string;
-  description: string | null;
-  imageUrl: string | null;
-  allergensCount: number;
-  foodsCount: number;
-  createdAt: string;
-}
-
-const columns: ColumnDef<Ingredient>[] = [
+const columns: ColumnDef<IIngredient>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
@@ -28,12 +26,18 @@ const columns: ColumnDef<Ingredient>[] = [
   {
     accessorKey: "imageUrl",
     header: "Ảnh",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const url = row.getValue("imageUrl") as string | null;
+      const meta = table.options.meta as any;
       return url ? (
-        <img src={url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+        <img 
+          src={url} 
+          alt="" 
+          className="h-10 w-10 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity hover:shadow-md" 
+          onClick={() => meta?.onImageClick?.(url)}
+        />
       ) : (
-        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">N/A</div>
+        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs"><Apple className="w-5 h-5 opacity-20"/></div>
       );
     },
     enableSorting: false,
@@ -52,58 +56,159 @@ const columns: ColumnDef<Ingredient>[] = [
     },
   },
   {
-    accessorKey: "allergensCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Chất gây dị ứng" />,
-    cell: ({ row }) => {
-      const count = row.getValue("allergensCount") as number;
-      return count > 0 ? (
-        <span className="inline-flex items-center rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 text-xs font-medium">{count} allergen</span>
-      ) : (
-        <span className="text-muted-foreground text-sm">Không có</span>
-      );
-    },
-  },
-  {
-    accessorKey: "foodsCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Số món ăn" />,
-  },
-  {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
-    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("createdAt")).toLocaleDateString("vi-VN")}</span>,
+    cell: ({ row }) => {
+        const val = row.getValue("createdAt");
+        return val ? <span className="text-muted-foreground text-sm">{new Date(val as string).toLocaleDateString("vi-VN")}</span> : <span className="text-muted-foreground text-sm">—</span>;
+    },
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> Xem</DropdownMenuItem>
-          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row, table }) => {
+        const meta = table.options.meta as any;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => meta?.onAction("edit", row.original)}><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => meta?.onAction("delete", row.original)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
   },
 ];
 
-const mockData: Ingredient[] = [
-  { id: 1, ingredientName: "Thịt bò", description: "Thịt bò tươi", imageUrl: null, allergensCount: 0, foodsCount: 8, createdAt: "2024-01-05T08:00:00Z" },
-  { id: 2, ingredientName: "Bánh phở", description: "Bánh phở tươi", imageUrl: null, allergensCount: 1, foodsCount: 4, createdAt: "2024-01-05T08:00:00Z" },
-  { id: 3, ingredientName: "Hành lá", description: "Hành lá tươi", imageUrl: null, allergensCount: 0, foodsCount: 15, createdAt: "2024-01-06T09:00:00Z" },
-  { id: 4, ingredientName: "Tôm", description: "Tôm sú tươi", imageUrl: null, allergensCount: 2, foodsCount: 6, createdAt: "2024-01-07T10:00:00Z" },
-  { id: 5, ingredientName: "Đậu phộng", description: "Đậu phộng rang", imageUrl: null, allergensCount: 1, foodsCount: 5, createdAt: "2024-01-08T11:00:00Z" },
-  { id: 6, ingredientName: "Trứng gà", description: "Trứng gà ta", imageUrl: null, allergensCount: 1, foodsCount: 12, createdAt: "2024-01-09T08:00:00Z" },
-  { id: 7, ingredientName: "Sữa tươi", description: "Sữa tươi không đường", imageUrl: null, allergensCount: 1, foodsCount: 3, createdAt: "2024-01-10T09:00:00Z" },
-  { id: 8, ingredientName: "Bột mì", description: "Bột mì đa dụng", imageUrl: null, allergensCount: 1, foodsCount: 7, createdAt: "2024-01-11T10:00:00Z" },
-];
-
 export default function IngredientsListPage() {
+  const [data, setData] = React.useState<IIngredient[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [selectedItem, setSelectedItem] = React.useState<IIngredient | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = React.useState<string | null>(null);
+
+  const fetchIngredients = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await ingredientService.getIngredientsPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize
+      );
+      if (res.data && res.data.EC === 0) {
+        setData((res.data.result as unknown as IIngredient[]) || []);
+        setTotal(res.data.meta?.total || 0);
+        setPages(res.data.meta?.pages || 1);
+      } else {
+        // According to API docs, might not exist yet, fallback elegantly
+        toast.error(res.data?.EM || "Không thể tải danh sách nguyên liệu, API có thể chưa hỗ trợ trực tiếp");
+        setData([]);
+      }
+    } catch (error) {
+      console.error("Fetch ingredients error:", error);
+      toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchIngredients();
+  }, [fetchIngredients]);
+
+  const handleAction = React.useCallback((action: "edit" | "delete", item: IIngredient) => {
+    setSelectedItem(item);
+    if (action === "edit") {
+      setFormMode("edit");
+      setFormOpen(true);
+    }
+    if (action === "delete") {
+      setDeleteOpen(true);
+    }
+  }, []);
+
+  const handleImageClick = React.useCallback((url: string) => {
+    setImagePreviewUrl(url);
+  }, []);
+
+  const confirmDelete = async () => {
+    if (!selectedItem) return;
+    try {
+      setLoading(true);
+      await ingredientService.deleteIngredient(selectedItem.id);
+      toast.success("Xóa thành công!");
+      fetchIngredients();
+    } catch (e: any) {
+      toast.error(e.message || "Xóa thất bại!");
+    } finally {
+      setLoading(false);
+      setDeleteOpen(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <DataTable columns={columns} data={mockData} searchKey="ingredientName" searchPlaceholder="Tìm theo tên nguyên liệu..." />
+      <DataTable
+        toolbarActions={
+          <Button onClick={() => {
+            setSelectedItem(null);
+            setFormMode("create");
+            setFormOpen(true);
+          }}>
+            <Apple className="mr-2 h-4 w-4" />
+            Tạo nguyên liệu
+          </Button>
+        }
+        meta={{ onAction: handleAction, onImageClick: handleImageClick }}
+        columns={columns}
+        data={data}
+        searchKey="ingredientName"
+        searchPlaceholder="Tìm theo tên nguyên liệu..."
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
+      />
+      <IngredientFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        mode={formMode}
+        initialData={selectedItem}
+        onSuccess={fetchIngredients}
+      />
+      
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa nguyên liệu "{selectedItem?.ingredientName}"?
+              Thao tác này là vĩnh viễn và có thể ảnh hưởng đến các món ăn sử dụng nó.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <ImagePreviewDialog 
+        url={imagePreviewUrl} 
+        onClose={() => setImagePreviewUrl(null)} 
+      />
     </div>
   );
 }

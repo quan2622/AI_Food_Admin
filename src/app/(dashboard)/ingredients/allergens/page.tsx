@@ -1,23 +1,24 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2, ShieldPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { ingredientService } from "@/services/ingredientService";
+import type { IAllergen } from "@/types/ingredient.type";
+import { AllergenFormDialog } from "@/components/ingredients/allergen-form-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-interface Allergen {
-  id: number;
-  name: string;
-  description: string | null;
-  usersAffected: number;
-  ingredientsCount: number;
-  createdAt: string;
-}
-
-const columns: ColumnDef<Allergen>[] = [
+const columns: ColumnDef<IAllergen>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
@@ -29,7 +30,7 @@ const columns: ColumnDef<Allergen>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Tên chất gây dị ứng" />,
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 text-xs font-bold">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-orange-500/10 text-orange-600 text-xs font-bold uppercase">
           {(row.getValue("name") as string).charAt(0)}
         </span>
         <span className="font-medium">{row.getValue("name")}</span>
@@ -45,56 +46,146 @@ const columns: ColumnDef<Allergen>[] = [
     },
   },
   {
-    accessorKey: "usersAffected",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Số user bị ảnh hưởng" />,
-    cell: ({ row }) => {
-      const count = row.getValue("usersAffected") as number;
-      return (
-        <span className={`text-sm font-medium ${count > 5 ? "text-red-500" : "text-muted-foreground"}`}>
-          {count} người
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: "ingredientsCount",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Số nguyên liệu" />,
-  },
-  {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
-    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("createdAt")).toLocaleDateString("vi-VN")}</span>,
+    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("createdAt") as string).toLocaleDateString("vi-VN")}</span>,
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as any;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => meta?.onAction("edit", row.original)}><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => meta?.onAction("delete", row.original)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 
-const mockData: Allergen[] = [
-  { id: 1, name: "Đậu phộng", description: "Gây dị ứng phổ biến, có thể gây sốc phản vệ", usersAffected: 8, ingredientsCount: 3, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 2, name: "Sữa", description: "Không dung nạp lactose hoặc dị ứng protein sữa", usersAffected: 12, ingredientsCount: 5, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 3, name: "Gluten", description: "Có trong lúa mì, lúa mạch, lúa mạch đen", usersAffected: 6, ingredientsCount: 4, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 4, name: "Hải sản (có vỏ)", description: "Tôm, cua, sò, ốc", usersAffected: 10, ingredientsCount: 6, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 5, name: "Trứng", description: "Trứng gà và các loại trứng gia cầm", usersAffected: 4, ingredientsCount: 2, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 6, name: "Đậu nành", description: "Đậu nành và các sản phẩm từ đậu nành", usersAffected: 3, ingredientsCount: 4, createdAt: "2024-01-02T08:00:00Z" },
-  { id: 7, name: "Hạt cây", description: "Hạnh nhân, óc chó, hạt điều, macadamia", usersAffected: 2, ingredientsCount: 5, createdAt: "2024-01-02T08:00:00Z" },
-];
-
 export default function AllergensPage() {
+  const [data, setData] = React.useState<IAllergen[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [selectedAllergen, setSelectedAllergen] = React.useState<IAllergen | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+
+  const fetchAllergens = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await ingredientService.getAllergensPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize
+      );
+      if (res.data && res.data.EC === 0) {
+        setData(res.data.result as unknown as IAllergen[]);
+        setTotal(res.data.meta.total);
+        setPages(res.data.meta.pages);
+      } else {
+        toast.error(res.data?.EM || "Không thể tải danh sách chất gây dị ứng");
+      }
+    } catch (error) {
+      console.error("Fetch allergens error:", error);
+      toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchAllergens();
+  }, [fetchAllergens]);
+
+  const handleAction = React.useCallback((action: "edit" | "delete", item: IAllergen) => {
+    setSelectedAllergen(item);
+    if (action === "edit") {
+      setFormMode("edit");
+      setFormOpen(true);
+    }
+    if (action === "delete") {
+      setDeleteOpen(true);
+    }
+  }, []);
+
+  const confirmDelete = async () => {
+    if (!selectedAllergen) return;
+    try {
+      setLoading(true);
+      await ingredientService.deleteAllergen(selectedAllergen.id);
+      toast.success("Xóa thành công!");
+      fetchAllergens();
+    } catch (e: any) {
+      toast.error(e.message || "Xóa thất bại!");
+    } finally {
+      setLoading(false);
+      setDeleteOpen(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <DataTable columns={columns} data={mockData} searchKey="name" searchPlaceholder="Tìm theo tên allergen..." />
+      <DataTable
+        toolbarActions={
+          <Button onClick={() => {
+            setSelectedAllergen(null);
+            setFormMode("create");
+            setFormOpen(true);
+          }}>
+            <ShieldPlus className="mr-2 h-4 w-4" />
+            Tạo Allergen
+          </Button>
+        }
+        meta={{ onAction: handleAction }}
+        columns={columns}
+        data={data}
+        searchKey="name"
+        searchPlaceholder="Tìm theo tên allergen..."
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
+      />
+
+      <AllergenFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        mode={formMode}
+        initialData={selectedAllergen}
+        onSuccess={fetchAllergens}
+      />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa chất gây dị ứng "{selectedAllergen?.name}"?
+              Hành động này sẽ xóa các liên kết dữ liệu liên quan ở món ăn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

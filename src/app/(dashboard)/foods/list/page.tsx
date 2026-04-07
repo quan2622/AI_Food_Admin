@@ -17,6 +17,8 @@ import { foodService } from "@/services/foodService";
 import { IFood } from "@/types/food.type";
 import { FoodDetailDialog } from "@/components/foods/food-detail-dialog";
 import { FoodFormDialog } from "@/components/foods/food-form-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImagePreviewDialog } from "@/components/image-preview-dialog";
 
 const columns: ColumnDef<IFood>[] = [
   {
@@ -34,10 +36,16 @@ const columns: ColumnDef<IFood>[] = [
   {
     accessorKey: "imageUrl",
     header: "Ảnh",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const url = row.getValue("imageUrl") as string | null;
+      const meta = table.options.meta as any;
       return url ? (
-        <img src={url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+        <img 
+          src={url} 
+          alt="" 
+          className="h-10 w-10 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity hover:shadow-md" 
+          onClick={() => meta?.onImageClick?.(url)}
+        />
       ) : (
         <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs text-center border">
           N/A
@@ -170,6 +178,7 @@ export default function FoodsListPage() {
   const [selectedFood, setSelectedFood] = React.useState<IFood | null>(null);
   const [detailOpen, setDetailOpen] = React.useState(false);
   const [formOpen, setFormOpen] = React.useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = React.useState<string | null>(null);
 
   const fetchFoods = React.useCallback(async () => {
     try {
@@ -229,6 +238,10 @@ export default function FoodsListPage() {
     [fetchFoods],
   );
 
+  const handleImageClick = React.useCallback((url: string) => {
+    setImagePreviewUrl(url);
+  }, []);
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       <div className="bg-background rounded-lg">
@@ -240,7 +253,7 @@ export default function FoodsListPage() {
           setPagination={setPagination}
           searchKey="foodName"
           searchPlaceholder="Tìm theo tên món ăn..."
-          meta={{ onAction: handleAction }}
+          meta={{ onAction: handleAction, onImageClick: handleImageClick }}
           defaultColumnVisibility={{ description: false, createdAt: false }}
           toolbarActions={
             <Button
@@ -266,6 +279,10 @@ export default function FoodsListPage() {
         onOpenChange={setFormOpen}
         initialData={selectedFood}
         onSuccess={fetchFoods}
+      />
+      <ImagePreviewDialog 
+        url={imagePreviewUrl} 
+        onClose={() => setImagePreviewUrl(null)} 
       />
     </div>
   );

@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { foodService } from "@/services/foodService";
 import { toast } from "sonner";
-import Zoom from "react-medium-image-zoom";
-import "react-medium-image-zoom/dist/styles.css";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImagePreviewDialog } from "@/components/image-preview-dialog";
 
 export default function FoodImagesPage() {
   const [data, setData] = React.useState<any[]>([]);
@@ -25,6 +25,7 @@ export default function FoodImagesPage() {
     pageIndex: 0,
     pageSize: 10,
   });
+  const [imagePreviewUrl, setImagePreviewUrl] = React.useState<string | null>(null);
 
   const fetchImages = React.useCallback(async () => {
     try {
@@ -91,13 +92,12 @@ export default function FoodImagesPage() {
         accessorKey: "imageUrl",
         header: "Ảnh",
         cell: ({ row }) => (
-          <Zoom>
-            <img
-              src={row.getValue("imageUrl")}
-              alt="Food"
-              className="h-12 w-12 rounded-lg object-cover border cursor-zoom-in"
-            />
-          </Zoom>
+          <img
+            src={row.getValue("imageUrl")}
+            alt="Food"
+            className="h-12 w-12 rounded-lg object-cover border cursor-pointer hover:opacity-80 transition-opacity hover:shadow-md"
+            onClick={() => setImagePreviewUrl(row.getValue("imageUrl"))}
+          />
         ),
         enableSorting: false,
       },
@@ -203,6 +203,10 @@ export default function FoodImagesPage() {
         pagination={pagination}
         setPagination={setPagination}
         defaultColumnVisibility={{ mimeType: false, fileName: false }}
+      />
+      <ImagePreviewDialog 
+        url={imagePreviewUrl} 
+        onClose={() => setImagePreviewUrl(null)} 
       />
     </div>
   );
