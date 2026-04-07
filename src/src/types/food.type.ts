@@ -1,10 +1,22 @@
-import { ApiResponse, IBackendPaginatedResponse } from "./backend.type";
+
 
 export interface IFoodCategory {
   id: number;
   name: string;
   description?: string | null;
   parentId?: number | null;
+}
+
+export interface IFoodCategoryAdmin {
+  id: number;
+  name: string;
+  description: string | null;
+  parentId: number | null;
+  parent: { id: number; name: string } | null;
+  children: { id: number; name: string }[];
+  foodCount: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface IFoodIngredient {
@@ -51,4 +63,16 @@ export interface IUpdateFoodRequest {
   imageUrl?: string;
   categoryId?: number;
   defaultServingGrams?: number;
+}
+
+export interface ICreateCategoryRequest {
+  name: string;
+  description?: string;
+  parentId?: number | null;
+}
+
+export interface IUpdateCategoryRequest {
+  name?: string;
+  description?: string;
+  parentId?: number | null;
 }

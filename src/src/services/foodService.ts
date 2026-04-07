@@ -1,6 +1,13 @@
 import privateAxios from "@/lib/privateAxios";
 import { ApiResponse, IBackendPaginatedResponse } from "@/types/backend.type";
-import { IFood, ICreateFoodRequest, IUpdateFoodRequest } from "@/types/food.type";
+import {
+  IFood,
+  IFoodCategoryAdmin,
+  ICreateFoodRequest,
+  IUpdateFoodRequest,
+  ICreateCategoryRequest,
+  IUpdateCategoryRequest,
+} from "@/types/food.type";
 
 export const foodService = {
   /**
@@ -57,5 +64,55 @@ export const foodService = {
   getFoodCategories: async (): Promise<ApiResponse<any[]>> => {
     const res = await privateAxios.get<ApiResponse<any[]>>(`/food-categories`);
     return res as unknown as ApiResponse<any[]>;
-  }
+  },
+
+  /**
+   * Lấy danh sách Food Categories (Admin) có phân trang
+   */
+  getCategoriesPaginated: async (
+    current: number = 1,
+    pageSize: number = 10
+  ): Promise<IBackendPaginatedResponse<IFoodCategoryAdmin>> => {
+    const res = await privateAxios.get<IBackendPaginatedResponse<IFoodCategoryAdmin>>(
+      `/food-categories/admin?current=${current}&pageSize=${pageSize}`
+    );
+    return res as unknown as IBackendPaginatedResponse<IFoodCategoryAdmin>;
+  },
+
+  /**
+   * Tạo danh mục mới
+   */
+  createCategory: async (
+    data: ICreateCategoryRequest
+  ): Promise<ApiResponse<IFoodCategoryAdmin>> => {
+    const res = await privateAxios.post<ApiResponse<IFoodCategoryAdmin>>(
+      "/food-categories",
+      data
+    );
+    return res as unknown as ApiResponse<IFoodCategoryAdmin>;
+  },
+
+  /**
+   * Cập nhật danh mục
+   */
+  updateCategory: async (
+    id: number,
+    data: IUpdateCategoryRequest
+  ): Promise<ApiResponse<IFoodCategoryAdmin>> => {
+    const res = await privateAxios.patch<ApiResponse<IFoodCategoryAdmin>>(
+      `/food-categories/${id}`,
+      data
+    );
+    return res as unknown as ApiResponse<IFoodCategoryAdmin>;
+  },
+
+  /**
+   * Xóa danh mục
+   */
+  deleteCategory: async (id: number): Promise<ApiResponse<null>> => {
+    const res = await privateAxios.delete<ApiResponse<null>>(
+      `/food-categories/${id}`
+    );
+    return res as unknown as ApiResponse<null>;
+  },
 };
