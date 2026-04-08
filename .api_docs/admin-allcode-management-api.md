@@ -157,6 +157,11 @@ GET /allcodes/admin?current=1&pageSize=10&...
 
 **Lọc & sort:** theo [api-query-params](https://github.com/koajs/aqp) — tham số lọc đưa vào `filter`, sort theo quy ước aqp (giống các module admin khác).
 
+**Định dạng `filter` (tránh 500 với Prisma):**
+
+- Chuỗi kiểu `filter[type]=GOAL` thường được HTTP parser chuyển thành object lồng `{ filter: { type: 'GOAL' } }` — hợp lệ.
+- Một số client (hoặc chuỗi query đưa thẳng vào `aqp`) lại tạo key phẳng literal `filter[type]` trong object filter; Prisma không có field đó → lỗi. Backend đã **chuẩn hoá** key `filter[field]` thành `field` (ví dụ `filter[type]` → `type`) trong `stripAdminPaginationFilter` dùng chung cho mọi admin pagination.
+
 **Sort mặc định** (khi không truyền `sort`): `updatedAt` **giảm dần**.
 
 **Ví dụ lọc theo nhóm `type`:**
@@ -164,6 +169,8 @@ GET /allcodes/admin?current=1&pageSize=10&...
 ```
 GET /api/v1/allcodes/admin?current=1&pageSize=20&filter[type]=MEAL
 ```
+
+(Tương đương `filter[type]=GOAL` cho nhóm mã goal.)
 
 **Ví dụ tìm theo tên hiển thị (regex, nếu client gửi đúng cú pháp aqp):**
 

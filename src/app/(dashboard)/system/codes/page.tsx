@@ -1,27 +1,39 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { FileCode2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { allCodeService } from "@/services/allCodeService";
+import type { IAllCode } from "@/types/allcode.type";
+import { AllCodeFormDialog } from "@/components/system/allcode-form-dialog";
 
-interface AllCode {
-  id: number;
-  keyMap: string;
-  type: string;
-  value: string;
-  description: string | null;
-  createdAt: string;
-}
-
-const columns: ColumnDef<AllCode>[] = [
+const columns: ColumnDef<IAllCode>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
-    cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground font-mono text-xs">
+        #{row.getValue("id")}
+      </span>
+    ),
     enableHiding: false,
   },
   {
@@ -37,11 +49,10 @@ const columns: ColumnDef<AllCode>[] = [
     accessorKey: "type",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Type" />,
     cell: ({ row }) => (
-      <span className="inline-flex rounded-md bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 text-xs font-medium">
+      <span className="inline-flex rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600">
         {row.getValue("type")}
       </span>
     ),
-    filterFn: (row, id, value) => row.getValue(id) === value,
   },
   {
     accessorKey: "value",
@@ -53,67 +64,209 @@ const columns: ColumnDef<AllCode>[] = [
     header: "Mô tả",
     cell: ({ row }) => {
       const d = row.getValue("description") as string | null;
-      return d ? <span className="text-sm max-w-[300px] truncate block text-muted-foreground">{d}</span> : <span className="text-muted-foreground">—</span>;
+      return d ? (
+        <span className="block max-w-[300px] truncate text-sm text-muted-foreground">
+          {d}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
     },
   },
   {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
-    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("createdAt")).toLocaleDateString("vi-VN")}</span>,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {new Date(row.getValue("createdAt") as string).toLocaleDateString("vi-VN")}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "updatedAt",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Cập nhật" />,
+    cell: ({ row }) => {
+      const v = row.original.updatedAt;
+      return v ? (
+        <span className="text-sm text-muted-foreground">
+          {new Date(v).toLocaleDateString("vi-VN")}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as {
+        onAction?: (action: "edit", item: IAllCode) => void;
+      };
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => meta?.onAction?.("edit", row.original)}>
+              <Pencil className="mr-2 h-4 w-4" /> Sửa
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled className="text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" /> Xóa
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 
-const mockData: AllCode[] = [
-  { id: 1, keyMap: "GOAL_LOSS", type: "GoalType", value: "Giảm cân", description: "Mục tiêu giảm cân", createdAt: "2024-01-01T08:00:00Z" },
-  { id: 2, keyMap: "GOAL_GAIN", type: "GoalType", value: "Tăng cân", description: "Mục tiêu tăng cân", createdAt: "2024-01-01T08:00:00Z" },
-  { id: 3, keyMap: "GOAL_MAINTAIN", type: "GoalType", value: "Duy trì", description: "Mục tiêu duy trì cân nặng", createdAt: "2024-01-01T08:00:00Z" },
-  { id: 4, keyMap: "MEAL_BREAKFAST", type: "MealType", value: "Bữa sáng", description: null, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 5, keyMap: "MEAL_LUNCH", type: "MealType", value: "Bữa trưa", description: null, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 6, keyMap: "MEAL_DINNER", type: "MealType", value: "Bữa tối", description: null, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 7, keyMap: "MEAL_SNACK", type: "MealType", value: "Ăn vặt", description: null, createdAt: "2024-01-01T08:00:00Z" },
-  { id: 8, keyMap: "SEV_LOW", type: "SeverityType", value: "Nhẹ", description: "Mức độ dị ứng nhẹ", createdAt: "2024-01-01T08:00:00Z" },
-  { id: 9, keyMap: "SEV_HIGH", type: "SeverityType", value: "Nặng", description: "Mức độ dị ứng nặng", createdAt: "2024-01-01T08:00:00Z" },
-  { id: 10, keyMap: "ACT_MODERATE", type: "ActivityLevel", value: "Trung bình", description: "Hoạt động thể chất mức trung bình", createdAt: "2024-01-01T08:00:00Z" },
-  { id: 11, keyMap: "SRC_USDA", type: "SourceType", value: "USDA", description: "Tham khảo từ USDA", createdAt: "2024-01-01T08:00:00Z" },
-  { id: 12, keyMap: "STATUS_MET", type: "StatusType", value: "Đạt mục tiêu", description: null, createdAt: "2024-01-01T08:00:00Z" },
-];
-
 export default function AllCodesPage() {
+  const [data, setData] = React.useState<IAllCode[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [typeOptions, setTypeOptions] = React.useState<string[]>([]);
+  const [typeFilter, setTypeFilter] = React.useState<string | undefined>(undefined);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [selectedCode, setSelectedCode] = React.useState<IAllCode | null>(null);
+
+  const handleAction = React.useCallback((action: "edit", item: IAllCode) => {
+    if (action === "edit") {
+      setSelectedCode(item);
+      setFormMode("edit");
+      setFormOpen(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await allCodeService.getAllCodesList();
+        if (!cancelled) {
+          const types = [...new Set(list.map((x) => x.type))].sort();
+          setTypeOptions(types);
+        }
+      } catch {
+        if (!cancelled) setTypeOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const fetchCodes = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await allCodeService.getAllCodesAdminPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        typeFilter ? { type: typeFilter } : undefined
+      );
+      if (res.data && res.data.EC === 0) {
+        setData(res.data.result as IAllCode[]);
+        setTotal(res.data.meta.total);
+        setPages(res.data.meta.pages);
+      } else {
+        toast.error(res.data?.EM || "Không thể tải danh sách mã");
+      }
+    } catch (error) {
+      console.error("Fetch allcodes error:", error);
+      toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.pageIndex, pagination.pageSize, typeFilter]);
+
+  React.useEffect(() => {
+    fetchCodes();
+  }, [fetchCodes]);
+
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      className={cn(
+        "flex flex-col gap-6 transition-opacity",
+        loading && "pointer-events-none opacity-60"
+      )}
+    >
       <DataTable
+        meta={{ onAction: handleAction }}
+        toolbarActions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => {
+                setSelectedCode(null);
+                setFormMode("create");
+                setFormOpen(true);
+              }}
+            >
+              <FileCode2 className="mr-2 h-4 w-4" />
+              Tạo mã
+            </Button>
+            <span className="whitespace-nowrap text-sm text-muted-foreground">
+              Nhóm (type)
+            </span>
+            <Select
+              value={typeFilter ?? "__all__"}
+              onValueChange={(v) => {
+                setTypeFilter(v === "__all__" ? undefined : v);
+                setPagination((p) => ({ ...p, pageIndex: 0 }));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[220px]">
+                <SelectValue placeholder="Tất cả" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tất cả</SelectItem>
+                {typeOptions.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
         columns={columns}
-        data={mockData}
+        data={data}
         searchKey="keyMap"
         searchPlaceholder="Tìm theo key..."
-        filterableColumns={[
-          {
-            id: "type",
-            title: "Loại",
-            options: [
-              { label: "GoalType", value: "GoalType" },
-              { label: "MealType", value: "MealType" },
-              { label: "SeverityType", value: "SeverityType" },
-              { label: "ActivityLevel", value: "ActivityLevel" },
-              { label: "SourceType", value: "SourceType" },
-              { label: "StatusType", value: "StatusType" },
-            ],
-          },
-        ]}
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
+        defaultColumnVisibility={{ description: false }}
+      />
+
+      <AllCodeFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        mode={formMode}
+        initialData={selectedCode}
+        typeSuggestions={typeOptions}
+        onSuccess={() => {
+          void (async () => {
+            await fetchCodes();
+            try {
+              const list = await allCodeService.getAllCodesList();
+              setTypeOptions([...new Set(list.map((x) => x.type))].sort());
+            } catch {
+              /* ignore */
+            }
+          })();
+        }}
       />
     </div>
   );
