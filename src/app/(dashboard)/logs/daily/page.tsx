@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
-import { DataTable, DataTableColumnHeader } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableColumnHeader,
+  DataTableDetailButton,
+} from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { toast } from "sonner";
-import { Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { logsService } from "@/services/logsService";
 import type { IDailyLogAdmin } from "@/types/logs.type";
 import { DailyLogMealsDialog } from "@/components/logs/daily-log-meals-dialog";
@@ -160,19 +162,15 @@ const columns: ColumnDef<DailyLogRow>[] = [
   },
   {
     id: "actions",
+    header: "",
     enableHiding: false,
     cell: ({ row, table }) => {
       const meta = table.options.meta as { onViewMeals?: (row: DailyLogRow) => void };
       return (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Xem bữa ăn"
+        <DataTableDetailButton
+          aria-label="Xem chi tiết bữa ăn trong daily log"
           onClick={() => meta?.onViewMeals?.(row.original)}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        />
       );
     },
   },

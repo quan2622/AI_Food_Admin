@@ -5,7 +5,8 @@ export interface IAllergen {
   usersAffected?: number; // Might not come from API but UI needs it or we map it
   ingredientsCount?: number;
   createdAt: string;
-  updatedAt: string;
+  /** Ngày cập nhật (API allergens/admin) */
+  updatedAt?: string;
 }
 
 export interface ICreateAllergenRequest {

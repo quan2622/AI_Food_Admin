@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
-import { DataTable, DataTableColumnHeader } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableColumnHeader,
+  DataTableDetailButton,
+} from "@/components/data-table";
+import {
+  MealDetailDialog,
+  type MealDetailContext,
+} from "@/components/logs/meal-detail-dialog";
 import { StatusBadge } from "@/components/status-badge";
 import { toast } from "sonner";
 import { logsService } from "@/services/logsService";
@@ -31,99 +39,139 @@ function toRow(m: IMealAdmin): MealRow {
   };
 }
 
-const columns: ColumnDef<MealRow>[] = [
-  {
-    accessorKey: "id",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
-    cell: ({ row }) => (
-      <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>
-    ),
-    enableHiding: false,
-  },
-  {
-    accessorKey: "userName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Người dùng" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("userName")}</span>,
-  },
-  {
-    accessorKey: "mealType",
-    header: "Bữa ăn",
-    cell: ({ row }) => {
-      const t = row.getValue("mealType") as string;
-      const info = mealTypeMap[t] ?? { label: t, variant: "muted" as const };
-      return <StatusBadge variant={info.variant}>{info.label}</StatusBadge>;
-    },
-    filterFn: (row, id, value) => row.getValue(id) === value,
-  },
-  {
-    accessorKey: "mealDateTime",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Thời gian" />,
-    cell: ({ row }) => (
-      <span className="text-sm">
-        {new Date(row.getValue("mealDateTime")).toLocaleString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "itemsCount",
-    header: "Số món",
-  },
-  {
-    accessorKey: "totalCalories",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Calories" />,
-    cell: ({ row }) => {
-      const v = row.original.totalCalories;
-      return v != null && !Number.isNaN(Number(v)) ? (
-        <span className="font-medium">{ceilGoalMetric(v)} kcal</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
-    },
-  },
-  {
-    accessorKey: "totalProtein",
-    header: "Protein",
-    cell: ({ row }) => {
-      const v = row.original.totalProtein;
-      return v != null && !Number.isNaN(Number(v)) ? (
-        <span className="text-blue-600">{ceilGoalMetric(v)}g</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
-    },
-  },
-  {
-    accessorKey: "totalCarbs",
-    header: "Carbs",
-    cell: ({ row }) => {
-      const v = row.original.totalCarbs;
-      return v != null && !Number.isNaN(Number(v)) ? (
-        <span className="text-amber-600">{ceilGoalMetric(v)}g</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
-    },
-  },
-  {
-    accessorKey: "totalFat",
-    header: "Fat",
-    cell: ({ row }) => {
-      const v = row.original.totalFat;
-      return v != null && !Number.isNaN(Number(v)) ? (
-        <span className="text-red-500">{ceilGoalMetric(v)}g</span>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
-    },
-  },
-];
-
 export default function MealsPage() {
+  const [detailOpen, setDetailOpen] = React.useState(false);
+  const [mealCtx, setMealCtx] = React.useState<MealDetailContext | null>(null);
+
+  const columns = React.useMemo<ColumnDef<MealRow>[]>(
+    () => [
+      {
+        accessorKey: "id",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="ID" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground font-mono text-xs">
+            #{row.getValue("id")}
+          </span>
+        ),
+        enableHiding: false,
+      },
+      {
+        accessorKey: "userName",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Người dùng" />
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium">{row.getValue("userName")}</span>
+        ),
+      },
+      {
+        accessorKey: "mealType",
+        header: "Bữa ăn",
+        cell: ({ row }) => {
+          const t = row.getValue("mealType") as string;
+          const info = mealTypeMap[t] ?? { label: t, variant: "muted" as const };
+          return <StatusBadge variant={info.variant}>{info.label}</StatusBadge>;
+        },
+        filterFn: (row, id, value) => row.getValue(id) === value,
+      },
+      {
+        accessorKey: "mealDateTime",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Thời gian" />
+        ),
+        cell: ({ row }) => (
+          <span className="text-sm">
+            {new Date(row.getValue("mealDateTime")).toLocaleString("vi-VN", {
+              day: "2-digit",
+              month: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "itemsCount",
+        header: "Số món",
+      },
+      {
+        accessorKey: "totalCalories",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Calories" />
+        ),
+        cell: ({ row }) => {
+          const v = row.original.totalCalories;
+          return v != null && !Number.isNaN(Number(v)) ? (
+            <span className="font-medium">{ceilGoalMetric(v)} kcal</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          );
+        },
+      },
+      {
+        accessorKey: "totalProtein",
+        header: "Protein",
+        cell: ({ row }) => {
+          const v = row.original.totalProtein;
+          return v != null && !Number.isNaN(Number(v)) ? (
+            <span className="text-blue-600">{ceilGoalMetric(v)}g</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          );
+        },
+      },
+      {
+        accessorKey: "totalCarbs",
+        header: "Carbs",
+        cell: ({ row }) => {
+          const v = row.original.totalCarbs;
+          return v != null && !Number.isNaN(Number(v)) ? (
+            <span className="text-amber-600">{ceilGoalMetric(v)}g</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          );
+        },
+      },
+      {
+        accessorKey: "totalFat",
+        header: "Fat",
+        cell: ({ row }) => {
+          const v = row.original.totalFat;
+          return v != null && !Number.isNaN(Number(v)) ? (
+            <span className="text-red-500">{ceilGoalMetric(v)}g</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <DataTableDetailButton
+            aria-label="Xem chi tiết bữa ăn"
+            onClick={() => {
+              const uid = row.original.dailyLog?.user?.id;
+              if (uid == null) {
+                toast.error("Không xác định user cho bữa ăn này.");
+                return;
+              }
+              setMealCtx({
+                userId: uid,
+                mealId: row.original.id,
+                userName: row.original.userName,
+              });
+              setDetailOpen(true);
+            }}
+          />
+        ),
+      },
+    ],
+    []
+  );
+
   const [data, setData] = React.useState<MealRow[]>([]);
   const [total, setTotal] = React.useState(0);
   const [pages, setPages] = React.useState(1);
@@ -179,6 +227,14 @@ export default function MealsPage() {
             ],
           },
         ]}
+      />
+      <MealDetailDialog
+        open={detailOpen}
+        onOpenChange={(o) => {
+          setDetailOpen(o);
+          if (!o) setMealCtx(null);
+        }}
+        context={mealCtx}
       />
     </div>
   );

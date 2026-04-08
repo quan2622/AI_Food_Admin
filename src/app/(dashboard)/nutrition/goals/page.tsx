@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
-import { DataTable, DataTableColumnHeader } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableColumnHeader,
+  DataTableDetailButton,
+} from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { nutritionService } from "@/services/nutritionService";
 import type { INutritionGoal } from "@/types/nutrition.type";
@@ -118,19 +120,15 @@ const columns: ColumnDef<NutritionGoalRow>[] = [
   },
   {
     id: "actions",
+    header: "",
     enableHiding: false,
     cell: ({ row, table }) => {
       const meta = table.options.meta as { onView?: (g: NutritionGoalRow) => void };
       return (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Xem chi tiết"
+        <DataTableDetailButton
+          aria-label="Xem chi tiết mục tiêu dinh dưỡng"
           onClick={() => meta?.onView?.(row.original)}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        />
       );
     },
   },

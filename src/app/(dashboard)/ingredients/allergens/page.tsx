@@ -3,7 +3,7 @@
 import * as React from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { Eye, MoreHorizontal, Pencil, Trash2, ShieldPlus } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, ShieldPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -49,6 +49,20 @@ const columns: ColumnDef<IAllergen>[] = [
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
     cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("createdAt") as string).toLocaleDateString("vi-VN")}</span>,
+  },
+  {
+    accessorKey: "updatedAt",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Cập nhật" />,
+    cell: ({ row }) => {
+      const v = row.original.updatedAt;
+      return v ? (
+        <span className="text-muted-foreground text-sm">
+          {new Date(v).toLocaleDateString("vi-VN")}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
   },
   {
     id: "actions",
@@ -159,6 +173,7 @@ export default function AllergensPage() {
         rowCount={total}
         pagination={pagination}
         setPagination={setPagination}
+        defaultColumnVisibility={{ description: false }}
       />
 
       <AllergenFormDialog

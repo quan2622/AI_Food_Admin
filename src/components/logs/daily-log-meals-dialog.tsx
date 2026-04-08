@@ -216,7 +216,7 @@ function MealGroupItemsTable({ group }: { group: IMealGroup }) {
   );
 }
 
-function MealItemsTable({ meal }: { meal: IMealInGroup | IMealByDailyLog }) {
+export function MealItemsTable({ meal }: { meal: IMealInGroup | IMealByDailyLog }) {
   const items = meal.mealItems ?? [];
   if (items.length === 0) {
     return (

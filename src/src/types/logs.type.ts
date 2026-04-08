@@ -146,3 +146,27 @@ export interface IMealAdmin {
   totalCarbs?: number;
   totalFat?: number;
 }
+
+/**
+ * GET /meals/users/:userId/meals/:mealId (AdminGuard)
+ * Meal kèm dailyLog + mealItems + food + mealTypeInfo + tổng macro (enrichMealType).
+ */
+export interface IMealDetailAdmin {
+  id: number;
+  mealType: string;
+  mealDateTime: string;
+  mealTypeInfo?: IAllCodeInfo;
+  dailyLog?: {
+    id: number;
+    logDate?: string;
+    userId?: number;
+    user?: ILogUser;
+  };
+  mealItems?: IMealItemDetail[];
+  totalCalories?: number;
+  totalProtein?: number;
+  totalCarbs?: number;
+  totalFat?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

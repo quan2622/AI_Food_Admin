@@ -1,6 +1,11 @@
 import privateAxios from "@/lib/privateAxios";
 import { IBackendPaginatedResponse } from "@/types/backend.type";
-import type { IDailyLogAdmin, IDailyLogDetail, IMealAdmin } from "@/types/logs.type";
+import type {
+  IDailyLogAdmin,
+  IDailyLogDetail,
+  IMealAdmin,
+  IMealDetailAdmin,
+} from "@/types/logs.type";
 
 export const logsService = {
   getDailyLogsAdminPaginated: async (
@@ -49,5 +54,33 @@ export const logsService = {
     const inner = d as { EC?: number; result?: IDailyLogDetail } | undefined;
     if (inner?.EC === 0 && inner.result) return inner.result;
     throw new Error("Phản hồi chi tiết daily log không hợp lệ");
+  },
+
+  /**
+   * Chi tiết meal theo user (admin).
+   * GET /meals/users/:userId/meals/:mealId
+   */
+  getMealDetailForUser: async (
+    userId: number,
+    mealId: number
+  ): Promise<IMealDetailAdmin> => {
+    const res = (await privateAxios.get(
+      `/meals/users/${userId}/meals/${mealId}`
+    )) as {
+      metadata?: { EC?: number; message?: string };
+      data?:
+        | IMealDetailAdmin
+        | { EC?: number; EM?: string; result?: IMealDetailAdmin };
+    };
+    if (res.metadata?.EC !== undefined && res.metadata.EC !== 0) {
+      throw new Error(res.metadata.message || "Không thể tải chi tiết meal");
+    }
+    const d = res.data;
+    if (d && typeof d === "object" && "id" in d && "mealType" in d) {
+      return d as IMealDetailAdmin;
+    }
+    const inner = d as { EC?: number; result?: IMealDetailAdmin } | undefined;
+    if (inner?.EC === 0 && inner.result) return inner.result;
+    throw new Error("Phản hồi chi tiết meal không hợp lệ");
   },
 };
