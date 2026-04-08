@@ -1,28 +1,18 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { MoreHorizontal, Pencil, Eye, Trash2 } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { nutritionService } from "@/services/nutritionService";
+import type { INutritionGoal } from "@/types/nutrition.type";
+import { NutritionGoalDetailDialog } from "@/components/nutrition/nutrition-goal-detail-dialog";
+import { ceilGoalMetric } from "@/lib/utils";
 
-interface NutritionGoal {
-  id: number;
-  userName: string;
-  goalType: string;
-  status: string;
-  targetWeight: number | null;
-  targetCalories: number;
-  targetProtein: number;
-  targetCarbs: number;
-  targetFat: number;
-  targetFiber: number;
-  startDate: string;
-  endDate: string;
-}
+type NutritionGoalRow = INutritionGoal & { userName: string };
 
 const goalTypeMap: Record<string, { label: string; variant: "info" | "success" | "warning" | "danger" }> = {
   GOAL_LOSS: { label: "Giảm cân", variant: "danger" },
@@ -38,11 +28,21 @@ const statusMap: Record<string, { label: string; variant: "info" | "success" | "
   NUTR_GOAL_FAILED: { label: "Thất bại", variant: "danger" },
 };
 
-const columns: ColumnDef<NutritionGoal>[] = [
+function toRow(g: INutritionGoal): NutritionGoalRow {
+  const userName =
+    g.user?.fullName?.trim() ||
+    g.user?.email ||
+    (g.userId ? `User #${g.userId}` : "—");
+  return { ...g, userName };
+}
+
+const columns: ColumnDef<NutritionGoalRow>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
-    cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>
+    ),
     enableHiding: false,
   },
   {
@@ -73,66 +73,122 @@ const columns: ColumnDef<NutritionGoal>[] = [
   {
     accessorKey: "targetCalories",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Calories" />,
-    cell: ({ row }) => <span>{row.getValue("targetCalories")} kcal</span>,
+    cell: ({ row }) => (
+      <span>{ceilGoalMetric(row.getValue("targetCalories"))} kcal</span>
+    ),
   },
   {
     accessorKey: "targetProtein",
     header: "Protein",
-    cell: ({ row }) => <span className="text-blue-600">{row.getValue("targetProtein")}g</span>,
+    cell: ({ row }) => (
+      <span className="text-blue-600">{ceilGoalMetric(row.getValue("targetProtein"))}g</span>
+    ),
   },
   {
     accessorKey: "targetCarbs",
     header: "Carbs",
-    cell: ({ row }) => <span className="text-amber-600">{row.getValue("targetCarbs")}g</span>,
+    cell: ({ row }) => (
+      <span className="text-amber-600">{ceilGoalMetric(row.getValue("targetCarbs"))}g</span>
+    ),
   },
   {
     accessorKey: "targetFat",
     header: "Fat",
-    cell: ({ row }) => <span className="text-red-500">{row.getValue("targetFat")}g</span>,
+    cell: ({ row }) => (
+      <span className="text-red-500">{ceilGoalMetric(row.getValue("targetFat"))}g</span>
+    ),
   },
   {
     accessorKey: "startDate",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Bắt đầu" />,
-    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("startDate")).toLocaleDateString("vi-VN")}</span>,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {new Date(row.getValue("startDate")).toLocaleDateString("vi-VN")}
+      </span>
+    ),
   },
   {
     accessorKey: "endDate",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Kết thúc" />,
-    cell: ({ row }) => <span className="text-muted-foreground text-sm">{new Date(row.getValue("endDate")).toLocaleDateString("vi-VN")}</span>,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground text-sm">
+        {new Date(row.getValue("endDate")).toLocaleDateString("vi-VN")}
+      </span>
+    ),
   },
   {
     id: "actions",
     enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> Xem</DropdownMenuItem>
-          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as { onView?: (g: NutritionGoalRow) => void };
+      return (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Xem chi tiết"
+          onClick={() => meta?.onView?.(row.original)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      );
+    },
   },
 ];
 
-const mockData: NutritionGoal[] = [
-  { id: 1, userName: "Nguyễn Văn An", goalType: "GOAL_LOSS", status: "NUTR_GOAL_ONGOING", targetWeight: 65, targetCalories: 1800, targetProtein: 120, targetCarbs: 200, targetFat: 50, targetFiber: 25, startDate: "2024-03-01", endDate: "2024-06-01" },
-  { id: 2, userName: "Trần Thị Bích", goalType: "GOAL_MAINTAIN", status: "NUTR_GOAL_ONGOING", targetWeight: null, targetCalories: 1600, targetProtein: 80, targetCarbs: 180, targetFat: 55, targetFiber: 20, startDate: "2024-02-15", endDate: "2024-08-15" },
-  { id: 3, userName: "Lê Minh Cường", goalType: "GOAL_GAIN", status: "NUTR_GOAL_COMPLETED", targetWeight: 85, targetCalories: 2800, targetProtein: 160, targetCarbs: 320, targetFat: 80, targetFiber: 30, startDate: "2024-01-01", endDate: "2024-04-01" },
-  { id: 4, userName: "Phạm Thùy Dung", goalType: "GOAL_STRICT", status: "NUTR_GOAL_PAUSED", targetWeight: 50, targetCalories: 1400, targetProtein: 90, targetCarbs: 140, targetFat: 40, targetFiber: 22, startDate: "2024-03-10", endDate: "2024-09-10" },
-  { id: 5, userName: "Hoàng Đức Em", goalType: "GOAL_LOSS", status: "NUTR_GOAL_FAILED", targetWeight: 70, targetCalories: 2000, targetProtein: 110, targetCarbs: 220, targetFat: 60, targetFiber: 28, startDate: "2024-01-15", endDate: "2024-04-15" },
-];
-
 export default function NutritionGoalsPage() {
+  const [data, setData] = React.useState<NutritionGoalRow[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [selectedGoal, setSelectedGoal] = React.useState<NutritionGoalRow | null>(null);
+  const [detailOpen, setDetailOpen] = React.useState(false);
+
+  const fetchGoals = React.useCallback(async () => {
+    try {
+      const res = await nutritionService.getNutritionGoalsAdminPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize
+      );
+      if (res.data && res.data.EC === 0) {
+        const raw = res.data.result as unknown as INutritionGoal[];
+        setData(raw.map(toRow));
+        setTotal(res.data.meta.total);
+        setPages(res.data.meta.pages);
+      } else {
+        toast.error(res.data?.EM || "Không thể tải danh sách mục tiêu");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals]);
+
+  const handleView = React.useCallback((row: NutritionGoalRow) => {
+    setSelectedGoal(row);
+    setDetailOpen(true);
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
       <DataTable
+        meta={{ onView: handleView }}
         columns={columns}
-        data={mockData}
+        data={data}
         searchKey="userName"
         searchPlaceholder="Tìm theo người dùng..."
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
         filterableColumns={[
           {
             id: "goalType",
@@ -155,6 +211,12 @@ export default function NutritionGoalsPage() {
             ],
           },
         ]}
+      />
+
+      <NutritionGoalDetailDialog
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        goal={selectedGoal}
       />
     </div>
   );
