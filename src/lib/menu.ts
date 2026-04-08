@@ -11,7 +11,6 @@ import {
   Activity,
   Target,
   CalendarDays,
-  Dumbbell,
   Cpu,
   Zap,
   Sparkles,
@@ -139,11 +138,6 @@ export const adminMenu: MenuGroup[] = [
             title: "Daily Logs",
             url: "/logs/daily",
             icon: CalendarDays,
-          },
-          {
-            title: "Workout Logs",
-            url: "/logs/workout",
-            icon: Dumbbell,
           },
           {
             title: "Meals",

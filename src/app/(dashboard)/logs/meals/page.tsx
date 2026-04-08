@@ -1,25 +1,15 @@
 "use client";
 
-import { type ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
+import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { MoreHorizontal, Eye, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import { logsService } from "@/services/logsService";
+import type { IMealAdmin } from "@/types/logs.type";
+import { ceilGoalMetric } from "@/lib/utils";
 
-interface Meal {
-  id: number;
-  userName: string;
-  mealType: string;
-  mealDateTime: string;
-  itemsCount: number;
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
-}
+type MealRow = IMealAdmin & { userName: string; itemsCount: number };
 
 const mealTypeMap: Record<string, { label: string; variant: "info" | "success" | "warning" | "danger" }> = {
   MEAL_BREAKFAST: { label: "Sáng", variant: "info" },
@@ -28,11 +18,26 @@ const mealTypeMap: Record<string, { label: string; variant: "info" | "success" |
   MEAL_SNACK: { label: "Ăn vặt", variant: "danger" },
 };
 
-const columns: ColumnDef<Meal>[] = [
+function toRow(m: IMealAdmin): MealRow {
+  const u = m.dailyLog?.user;
+  const userName =
+    u?.fullName?.trim() ||
+    u?.email ||
+    (u?.id ? `User #${u.id}` : "—");
+  return {
+    ...m,
+    userName,
+    itemsCount: m.mealItems?.length ?? 0,
+  };
+}
+
+const columns: ColumnDef<MealRow>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
-    cell: ({ row }) => <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>,
+    cell: ({ row }) => (
+      <span className="text-muted-foreground font-mono text-xs">#{row.getValue("id")}</span>
+    ),
     enableHiding: false,
   },
   {
@@ -53,7 +58,16 @@ const columns: ColumnDef<Meal>[] = [
   {
     accessorKey: "mealDateTime",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Thời gian" />,
-    cell: ({ row }) => <span className="text-sm">{new Date(row.getValue("mealDateTime")).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>,
+    cell: ({ row }) => (
+      <span className="text-sm">
+        {new Date(row.getValue("mealDateTime")).toLocaleString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </span>
+    ),
   },
   {
     accessorKey: "itemsCount",
@@ -62,57 +76,97 @@ const columns: ColumnDef<Meal>[] = [
   {
     accessorKey: "totalCalories",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Calories" />,
-    cell: ({ row }) => <span className="font-medium">{row.getValue("totalCalories")} kcal</span>,
+    cell: ({ row }) => {
+      const v = row.original.totalCalories;
+      return v != null && !Number.isNaN(Number(v)) ? (
+        <span className="font-medium">{ceilGoalMetric(v)} kcal</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
   },
   {
     accessorKey: "totalProtein",
     header: "Protein",
-    cell: ({ row }) => <span className="text-blue-600">{row.getValue("totalProtein")}g</span>,
+    cell: ({ row }) => {
+      const v = row.original.totalProtein;
+      return v != null && !Number.isNaN(Number(v)) ? (
+        <span className="text-blue-600">{ceilGoalMetric(v)}g</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
   },
   {
     accessorKey: "totalCarbs",
     header: "Carbs",
-    cell: ({ row }) => <span className="text-amber-600">{row.getValue("totalCarbs")}g</span>,
+    cell: ({ row }) => {
+      const v = row.original.totalCarbs;
+      return v != null && !Number.isNaN(Number(v)) ? (
+        <span className="text-amber-600">{ceilGoalMetric(v)}g</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
   },
   {
     accessorKey: "totalFat",
     header: "Fat",
-    cell: ({ row }) => <span className="text-red-500">{row.getValue("totalFat")}g</span>,
+    cell: ({ row }) => {
+      const v = row.original.totalFat;
+      return v != null && !Number.isNaN(Number(v)) ? (
+        <span className="text-red-500">{ceilGoalMetric(v)}g</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
+    },
   },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem><Eye className="mr-2 h-4 w-4" /> Xem chi tiết</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  },
-];
-
-const mockData: Meal[] = [
-  { id: 1, userName: "Nguyễn Văn An", mealType: "MEAL_BREAKFAST", mealDateTime: "2024-04-01T07:00:00Z", itemsCount: 2, totalCalories: 450, totalProtein: 20, totalCarbs: 55, totalFat: 15 },
-  { id: 2, userName: "Nguyễn Văn An", mealType: "MEAL_LUNCH", mealDateTime: "2024-04-01T12:00:00Z", itemsCount: 3, totalCalories: 700, totalProtein: 35, totalCarbs: 80, totalFat: 25 },
-  { id: 3, userName: "Nguyễn Văn An", mealType: "MEAL_DINNER", mealDateTime: "2024-04-01T18:30:00Z", itemsCount: 2, totalCalories: 600, totalProtein: 30, totalCarbs: 65, totalFat: 20 },
-  { id: 4, userName: "Trần Thị Bích", mealType: "MEAL_BREAKFAST", mealDateTime: "2024-04-01T06:30:00Z", itemsCount: 1, totalCalories: 350, totalProtein: 15, totalCarbs: 40, totalFat: 12 },
-  { id: 5, userName: "Trần Thị Bích", mealType: "MEAL_LUNCH", mealDateTime: "2024-04-01T11:30:00Z", itemsCount: 2, totalCalories: 550, totalProtein: 25, totalCarbs: 60, totalFat: 18 },
-  { id: 6, userName: "Lê Minh Cường", mealType: "MEAL_SNACK", mealDateTime: "2024-04-01T15:00:00Z", itemsCount: 1, totalCalories: 200, totalProtein: 10, totalCarbs: 25, totalFat: 8 },
-  { id: 7, userName: "Lê Minh Cường", mealType: "MEAL_DINNER", mealDateTime: "2024-04-01T19:00:00Z", itemsCount: 4, totalCalories: 900, totalProtein: 50, totalCarbs: 100, totalFat: 30 },
 ];
 
 export default function MealsPage() {
+  const [data, setData] = React.useState<MealRow[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const fetchMeals = React.useCallback(async () => {
+    try {
+      const res = await logsService.getMealsAdminPaginated(
+        pagination.pageIndex + 1,
+        pagination.pageSize
+      );
+      if (res.data && res.data.EC === 0) {
+        const raw = res.data.result as unknown as IMealAdmin[];
+        setData(raw.map(toRow));
+        setTotal(res.data.meta.total);
+        setPages(res.data.meta.pages);
+      } else {
+        toast.error(res.data?.EM || "Không thể tải meals");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
+
+  React.useEffect(() => {
+    fetchMeals();
+  }, [fetchMeals]);
+
   return (
     <div className="flex flex-col gap-6">
       <DataTable
         columns={columns}
-        data={mockData}
+        data={data}
         searchKey="userName"
         searchPlaceholder="Tìm theo tên người dùng..."
+        pageCount={pages}
+        rowCount={total}
+        pagination={pagination}
+        setPagination={setPagination}
         filterableColumns={[
           {
             id: "mealType",
