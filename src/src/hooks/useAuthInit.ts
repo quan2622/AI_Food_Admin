@@ -36,10 +36,14 @@ export const useAuthInit = () => {
           // Lỗi logic từ backend (VD: User bị khóa) -> Xóa toàn bộ session
           logoutAction();
         }
-      } catch (error) {
+      } catch (error: any) {
         // Lỗi 401: Interceptor của privateAxios sẽ tự động xử lý refresh hoặc logout
         // Ở đây chúng ta giữ nguyên trạng thái cache nếu là lỗi Network/Server để tránh logout nhầm
-        console.error("Auth init sync failed:", error);
+        if (error.isAxiosError && error.message === "Network Error") {
+          console.warn("Auth init sync failed: Backend unreachable (Network Error).");
+        } else {
+          console.error("Auth init sync failed:", error?.message || error);
+        }
       } finally {
         setIsInitializing(false);
       }
