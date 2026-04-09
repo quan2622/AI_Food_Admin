@@ -128,17 +128,16 @@ export default function NutrientsPage() {
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [deleteOpen, setDeleteOpen] = React.useState(false);
 
-  // Server-side pagination state
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [pageSize, setPageSize] = React.useState(10);
+  // Server-side pagination state — dùng PaginationState (0-indexed) cho DataTable
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
   const [totalPages, setTotalPages] = React.useState(1);
   const [totalItems, setTotalItems] = React.useState(0);
 
-  const fetchList = React.useCallback(async (page = currentPage, size = pageSize) => {
+  const fetchList = React.useCallback(async (pageIndex: number, pageSize: number) => {
     try {
       const res = await nutritionService.getNutritionComponentsPaginated({
-        current: page,
-        pageSize: size,
+        current: pageIndex + 1, // API dùng 1-indexed
+        pageSize,
       });
       const inner = res?.data;
       if (inner?.EC === 0) {
@@ -152,17 +151,11 @@ export default function NutrientsPage() {
       console.error(e);
       toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
     }
-  }, [currentPage, pageSize]);
+  }, []);
 
   React.useEffect(() => {
-    fetchList(currentPage, pageSize);
-  }, [currentPage, pageSize]);
-
-  const handlePageChange = (page: number) => setCurrentPage(page);
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
+    fetchList(pagination.pageIndex, pagination.pageSize);
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   const handleAction = React.useCallback((action: "edit" | "delete", item: INutritionComponent) => {
     setSelected(item);
@@ -173,12 +166,14 @@ export default function NutrientsPage() {
     if (action === "delete") setDeleteOpen(true);
   }, []);
 
+  const handleSuccess = () => fetchList(pagination.pageIndex, pagination.pageSize);
+
   const confirmDelete = async () => {
     if (!selected) return;
     try {
       await nutritionService.deleteNutritionComponent(selected.id);
       toast.success("Đã xóa chỉ số dinh dưỡng");
-      fetchList(currentPage, pageSize);
+      fetchList(pagination.pageIndex, pagination.pageSize);
     } catch (err: unknown) {
       toast.error((err as { message?: string })?.message || "Xóa thất bại");
     } finally {
@@ -206,14 +201,10 @@ export default function NutrientsPage() {
         data={data}
         searchKey="name"
         searchPlaceholder="Tìm chất dinh dưỡng..."
-        // Server-side pagination props
-        manualPagination
+        pagination={pagination}
+        setPagination={setPagination}
         pageCount={totalPages}
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalItems={totalItems}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        rowCount={totalItems}
       />
 
       <NutrientFormDialog
@@ -221,7 +212,7 @@ export default function NutrientsPage() {
         onOpenChange={setFormOpen}
         mode={formMode}
         initialData={selected}
-        onSuccess={() => fetchList(currentPage, pageSize)}
+        onSuccess={handleSuccess}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   LayoutDashboard,
   PieChart,
+  Inbox,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -167,6 +168,12 @@ export const adminMenu: MenuGroup[] = [
           },
         ],
       },
+      {
+        title: "User Submissions",
+        url: "/submissions",
+        icon: Inbox,
+      },
+
     ],
   },
   {
