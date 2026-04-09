@@ -75,8 +75,8 @@ export function DataTableToolbar<TData>({
                 tableColumn.setFilterValue(value === "all" ? undefined : value)
               }
             >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder={column.title} />
+              <SelectTrigger className="w-[180px] truncate">
+                <SelectValue placeholder={column.title} className="truncate" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả {column.title.toLowerCase()}</SelectItem>

@@ -17,6 +17,20 @@ export const nutritionService = {
     return res as unknown as ApiResponse<INutritionComponent[]>;
   },
 
+  getNutritionComponentsPaginated: async (params: {
+    current?: number;
+    pageSize?: number;
+    name?: string;
+    unit?: string;
+    sort?: string;
+  } = {}): Promise<IBackendPaginatedResponse<INutritionComponent>> => {
+    const res = await privateAxios.get<IBackendPaginatedResponse<INutritionComponent>>(
+      "/nutrition-components/paginate",
+      { params: { current: 1, pageSize: 10, ...params } }
+    );
+    return res as unknown as IBackendPaginatedResponse<INutritionComponent>;
+  },
+
   createNutritionComponent: async (
     data: ICreateNutritionComponentRequest
   ): Promise<ApiResponse<INutritionComponent>> => {

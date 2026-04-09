@@ -39,22 +39,6 @@ function formatUnit(unit: string) {
   return UNIT_LABELS[unit] ?? unit;
 }
 
-function parseNutrientList(res: {
-  metadata?: { EC?: number; message?: string };
-  data?: unknown;
-}): INutritionComponent[] | null {
-  if (res.metadata?.EC !== undefined && res.metadata.EC !== 0) {
-    toast.error(res.metadata.message || "Không thể tải danh sách chỉ số dinh dưỡng");
-    return null;
-  }
-  const d = res.data as
-    | INutritionComponent[]
-    | { EC?: number; EM?: string; result?: INutritionComponent[] }
-    | undefined;
-  if (Array.isArray(d)) return d;
-  if (d && typeof d === "object" && d.EC === 0 && Array.isArray(d.result)) return d.result;
-  return [];
-}
 
 const columns: ColumnDef<INutritionComponent>[] = [
   {
@@ -144,23 +128,41 @@ export default function NutrientsPage() {
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [deleteOpen, setDeleteOpen] = React.useState(false);
 
-  const fetchList = React.useCallback(async () => {
+  // Server-side pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [totalItems, setTotalItems] = React.useState(0);
+
+  const fetchList = React.useCallback(async (page = currentPage, size = pageSize) => {
     try {
-      const res = (await nutritionService.getNutritionComponents()) as {
-        metadata?: { EC?: number; message?: string };
-        data?: unknown;
-      };
-      const list = parseNutrientList(res);
-      if (list !== null) setData(list);
+      const res = await nutritionService.getNutritionComponentsPaginated({
+        current: page,
+        pageSize: size,
+      });
+      const inner = res?.data;
+      if (inner?.EC === 0) {
+        setData(inner.result ?? []);
+        setTotalPages(inner.meta?.pages ?? 1);
+        setTotalItems(inner.meta?.total ?? 0);
+      } else {
+        toast.error(inner?.EM || "Không thể tải danh sách chỉ số dinh dưỡng");
+      }
     } catch (e) {
       console.error(e);
       toast.error("Đã xảy ra lỗi khi kết nối máy chủ");
     }
-  }, []);
+  }, [currentPage, pageSize]);
 
   React.useEffect(() => {
-    fetchList();
-  }, [fetchList]);
+    fetchList(currentPage, pageSize);
+  }, [currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => setCurrentPage(page);
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   const handleAction = React.useCallback((action: "edit" | "delete", item: INutritionComponent) => {
     setSelected(item);
@@ -176,7 +178,7 @@ export default function NutrientsPage() {
     try {
       await nutritionService.deleteNutritionComponent(selected.id);
       toast.success("Đã xóa chỉ số dinh dưỡng");
-      fetchList();
+      fetchList(currentPage, pageSize);
     } catch (err: unknown) {
       toast.error((err as { message?: string })?.message || "Xóa thất bại");
     } finally {
@@ -204,6 +206,14 @@ export default function NutrientsPage() {
         data={data}
         searchKey="name"
         searchPlaceholder="Tìm chất dinh dưỡng..."
+        // Server-side pagination props
+        manualPagination
+        pageCount={totalPages}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
 
       <NutrientFormDialog
@@ -211,7 +221,7 @@ export default function NutrientsPage() {
         onOpenChange={setFormOpen}
         mode={formMode}
         initialData={selected}
-        onSuccess={fetchList}
+        onSuccess={() => fetchList(currentPage, pageSize)}
       />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
