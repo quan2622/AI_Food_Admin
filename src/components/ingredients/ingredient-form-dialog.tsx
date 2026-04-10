@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -15,11 +15,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { ingredientService } from "@/services/ingredientService";
-import { Loader2, Apple, Upload, X, Activity, Droplets, Zap, Wheat } from "lucide-react";
+import { Loader2, Apple, Upload, X, Activity, Droplets, Zap, Wheat, Database } from "lucide-react";
 import type { IIngredient } from "@/types/ingredient.type";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   ingredientName: z
@@ -27,6 +35,7 @@ const formSchema = z.object({
     .min(1, { message: "Tên không được để trống" })
     .max(255, { message: "Tên tối đa 255 ký tự" }),
   description: z.string().max(1000, { message: "Mô tả tối đa 1000 ký tự" }).optional(),
+  source: z.enum(["SRC_MANUAL", "SRC_USDA", "SRC_CALC"]).default("SRC_MANUAL"),
   image: z.any().optional(),
   // Fixed nutrition fields (Calories removed)
   protein: z.string().optional(),
@@ -69,6 +78,7 @@ export function IngredientFormDialog({
     register,
     handleSubmit,
     setValue,
+    control,
     reset,
     formState: { errors },
   } = useForm<FormValues>({
@@ -76,6 +86,7 @@ export function IngredientFormDialog({
     defaultValues: { 
       ingredientName: "", 
       description: "",
+      source: "SRC_MANUAL",
       protein: "",
       fat: "",
       carbs: "",
@@ -86,12 +97,14 @@ export function IngredientFormDialog({
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && initialData) {
-      const nutriValues = initialData.ingredientNutritions?.[0]?.values || [];
+      const nutri = initialData.ingredientNutritions?.[0];
+      const nutriValues = nutri?.values || [];
       const getVal = (id: number) => nutriValues.find(v => v.nutrient.id === id)?.value?.toString() || "";
 
       reset({
         ingredientName: initialData.ingredientName,
         description: initialData.description ?? "",
+        source: (nutri?.source as any) || "SRC_MANUAL",
         protein: getVal(NUTRIENT_IDS.protein),
         fat: getVal(NUTRIENT_IDS.fat),
         carbs: getVal(NUTRIENT_IDS.carbs),
@@ -102,6 +115,7 @@ export function IngredientFormDialog({
       reset({ 
         ingredientName: "", 
         description: "",
+        source: "SRC_MANUAL",
         protein: "",
         fat: "",
         carbs: "",
@@ -143,6 +157,7 @@ export function IngredientFormDialog({
       const formData = new FormData();
       formData.append("ingredientName", values.ingredientName);
       if (values.description) formData.append("description", values.description);
+      formData.append("source", values.source);
       
       if (values.image instanceof File) {
         formData.append("image", values.image);
@@ -254,14 +269,51 @@ export function IngredientFormDialog({
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="ing-description" className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Mô tả ngắn</Label>
-                  <Textarea
-                    id="ing-description"
-                    placeholder="Mô tả ngắn gọn về sản phẩm..."
-                    className="resize-none rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white transition-all p-4 h-[86px] text-sm"
-                    {...register("description")}
-                  />
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Nguồn dữ liệu</Label>
+                    <Controller
+                      name="source"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger className="rounded-xl border-slate-100 bg-slate-50/30 h-10 font-bold transition-all">
+                            <SelectValue placeholder="Chọn nguồn dữ liệu" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-slate-100 shadow-xl overflow-hidden">
+                            <SelectItem value="SRC_MANUAL" className="py-3 px-4 focus:bg-emerald-50 focus:text-emerald-900">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="success" className="h-1.5 w-1.5 p-0 rounded-full" />
+                                <span className="font-bold text-sm tracking-tight text-slate-600">SRC_MANUAL (Nhập tay)</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="SRC_USDA" className="py-3 px-4 focus:bg-blue-50 focus:text-blue-900">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="info" className="h-1.5 w-1.5 p-0 rounded-full" />
+                                <span className="font-bold text-sm tracking-tight text-slate-600">SRC_USDA (Hệ thống USDA)</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="SRC_CALC" className="py-3 px-4 focus:bg-amber-50 focus:text-amber-900">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="warning" className="h-1.5 w-1.5 p-0 rounded-full" />
+                                <span className="font-bold text-sm tracking-tight text-slate-600">SRC_CALC (Tự động tính)</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="ing-description" className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Mô tả ngắn</Label>
+                    <Textarea
+                      id="ing-description"
+                      placeholder="Mô tả ngắn gọn về sản phẩm..."
+                      className="resize-none rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white transition-all p-4 h-[86px] text-sm"
+                      {...register("description")}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -16,6 +16,7 @@ import { IngredientDetailDialog } from "@/components/ingredients/ingredient-deta
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImagePreviewDialog } from "@/components/image-preview-dialog";
+import { Badge } from "@/components/ui/badge";
 
 const columns: ColumnDef<IIngredient>[] = [
   {
@@ -97,7 +98,18 @@ const columns: ColumnDef<IIngredient>[] = [
     header: "Nguồn",
     cell: ({ row }) => {
       const source = row.original.ingredientNutritions?.[0]?.source;
-      return source ? <span className="text-xs italic text-slate-500">{source}</span> : <span className="text-muted-foreground">—</span>;
+      if (!source) return <span className="text-muted-foreground">—</span>;
+
+      switch (source) {
+        case "SRC_USDA":
+          return <Badge variant="info" className="text-[10px] font-black tracking-tight rounded-md px-1.5 py-0 h-5">USDA</Badge>;
+        case "SRC_MANUAL":
+          return <Badge variant="success" className="text-[10px] font-black tracking-tight rounded-md px-1.5 py-0 h-5">MANUAL</Badge>;
+        case "SRC_CALC":
+          return <Badge variant="warning" className="text-[10px] font-black tracking-tight rounded-md px-1.5 py-0 h-5">CALC</Badge>;
+        default:
+          return <Badge variant="outline" className="text-[10px] uppercase rounded-md px-1.5 py-0 h-5">{source}</Badge>;
+      }
     },
   },
   {

@@ -86,9 +86,7 @@ export const ingredientService = {
   },
 
   createIngredient: async (data: FormData): Promise<ApiResponse<IIngredient>> => {
-    const res = await privateAxios.post<ApiResponse<IIngredient>>("/ingredients", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await privateAxios.post<ApiResponse<IIngredient>>("/ingredients", data);
     return res as unknown as ApiResponse<IIngredient>;
   },
 
@@ -96,9 +94,7 @@ export const ingredientService = {
     id: number,
     data: FormData
   ): Promise<ApiResponse<IIngredient>> => {
-    const res = await privateAxios.patch<ApiResponse<IIngredient>>(`/ingredients/${id}`, data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await privateAxios.patch<ApiResponse<IIngredient>>(`/ingredients/${id}`, data);
     return res as unknown as ApiResponse<IIngredient>;
   },
 

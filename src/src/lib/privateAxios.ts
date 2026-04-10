@@ -13,9 +13,6 @@ const NO_RETRY_HEADER = "x-no-retry";
 const privateAxios = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BACKEND_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Singleton Promise – gộp nhiều request 401 cùng lúc chỉ gọi refresh 1 lần
