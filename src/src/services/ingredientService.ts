@@ -63,6 +63,23 @@ export const ingredientService = {
     return res as unknown as IBackendPaginatedResponse<IIngredient>;
   },
 
+  getAllIngredients: async (): Promise<ApiResponse<IIngredient[]>> => {
+    const res = await privateAxios.get<ApiResponse<IIngredient[]>>("/ingredients");
+    return res as unknown as ApiResponse<IIngredient[]>;
+  },
+
+  getTopAllergenIngredients: async (): Promise<ApiResponse<IIngredient[]>> => {
+    const res = await privateAxios.get<ApiResponse<IIngredient[]>>("/ingredients/top-allergen");
+    return res as unknown as ApiResponse<IIngredient[]>;
+  },
+
+  searchIngredients: async (name: string): Promise<ApiResponse<IIngredient[]>> => {
+    const res = await privateAxios.get<ApiResponse<IIngredient[]>>("/ingredients/search", {
+      params: { name }
+    });
+    return res as unknown as ApiResponse<IIngredient[]>;
+  },
+
   getIngredientById: async (id: number): Promise<ApiResponse<IIngredient>> => {
     const res = await privateAxios.get<ApiResponse<IIngredient>>(`/ingredients/${id}`);
     return res as unknown as ApiResponse<IIngredient>;

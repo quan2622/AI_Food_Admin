@@ -108,11 +108,11 @@ export const adminMenu: MenuGroup[] = [
             url: "/ingredients/allergens",
             icon: AlertTriangle,
           },
-          {
-            title: "Dinh dưỡng Nguyên liệu",
-            url: "/ingredients/nutrition",
-            icon: HeartPulse,
-          },
+          // {
+          //   title: "Dinh dưỡng Nguyên liệu",
+          //   url: "/ingredients/nutrition",
+          //   icon: HeartPulse,
+          // },
         ],
       },
       {

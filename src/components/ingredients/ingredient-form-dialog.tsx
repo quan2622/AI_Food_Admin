@@ -49,8 +49,8 @@ interface IngredientFormDialogProps {
 // Nutrient IDs mapping (Calories ID 1 removed as requested)
 const NUTRIENT_IDS = {
   protein: 2,
-  fat: 3,
-  carbs: 4,
+  carbs: 3,
+  fat: 4,
   fiber: 5,
 };
 

@@ -12,11 +12,13 @@ export interface IAllergen {
 export interface ICreateAllergenRequest {
   name: string;
   description?: string;
+  ingredientIds?: number[];
 }
 
 export interface IUpdateAllergenRequest {
   name?: string;
   description?: string;
+  ingredientIds?: number[];
 }
 
 export interface IIngredient {

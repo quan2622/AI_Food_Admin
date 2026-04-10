@@ -57,12 +57,65 @@ const columns: ColumnDef<IIngredient>[] = [
     },
   },
   {
+    accessorKey: "protein",
+    header: "Protein",
+    cell: ({ row }) => {
+      const nutri = row.original.ingredientNutritions?.[0];
+      const val = nutri?.values?.find((v: any) => v.nutrient.id === 2)?.value;
+      return val !== undefined ? <span className="font-bold text-blue-600">{val}g</span> : <span className="text-muted-foreground">—</span>;
+    },
+  },
+  {
+    accessorKey: "carbs",
+    header: "Carbs",
+    cell: ({ row }) => {
+      const nutri = row.original.ingredientNutritions?.[0];
+      const val = nutri?.values?.find((v: any) => v.nutrient.id === 3)?.value;
+      return val !== undefined ? <span className="font-bold text-amber-600">{val}g</span> : <span className="text-muted-foreground">—</span>;
+    },
+  },
+  {
+    accessorKey: "fat",
+    header: "Fat",
+    cell: ({ row }) => {
+      const nutri = row.original.ingredientNutritions?.[0];
+      const val = nutri?.values?.find((v: any) => v.nutrient.id === 4)?.value;
+      return val !== undefined ? <span className="font-bold text-rose-600">{val}g</span> : <span className="text-muted-foreground">—</span>;
+    },
+  },
+  {
+    accessorKey: "fiber",
+    header: "Fiber",
+    cell: ({ row }) => {
+      const nutri = row.original.ingredientNutritions?.[0];
+      const val = nutri?.values?.find((v: any) => v.nutrient.id === 5)?.value;
+      return val !== undefined ? <span className="font-bold text-emerald-600">{val}g</span> : <span className="text-muted-foreground">—</span>;
+    },
+  },
+  {
+    accessorKey: "source",
+    header: "Nguồn",
+    cell: ({ row }) => {
+      const source = row.original.ingredientNutritions?.[0]?.source;
+      return source ? <span className="text-xs italic text-slate-500">{source}</span> : <span className="text-muted-foreground">—</span>;
+    },
+  },
+  {
+    accessorKey: "updatedAt",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Cập nhật" />,
+    cell: ({ row }) => {
+        const val = row.getValue("updatedAt");
+        return val ? <span className="text-muted-foreground text-sm">{new Date(val as string).toLocaleDateString("vi-VN")}</span> : <span className="text-muted-foreground text-sm">—</span>;
+    },
+  },
+  {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
     cell: ({ row }) => {
         const val = row.getValue("createdAt");
         return val ? <span className="text-muted-foreground text-sm">{new Date(val as string).toLocaleDateString("vi-VN")}</span> : <span className="text-muted-foreground text-sm">—</span>;
     },
+    // Hide by default
   },
   {
     id: "actions",
@@ -180,6 +233,7 @@ export default function IngredientsListPage() {
         meta={{ onAction: handleAction, onImageClick: handleImageClick }}
         columns={columns}
         data={data}
+        defaultColumnVisibility={{ createdAt: false, description: false }}
         searchKey="ingredientName"
         searchPlaceholder="Tìm theo tên nguyên liệu..."
         pageCount={pages}
