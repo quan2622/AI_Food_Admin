@@ -7,14 +7,17 @@ import type {
   INutritionGoal,
   ICreateNutritionGoalRequest,
   IUpdateNutritionGoalRequest,
+  INutrient
 } from "@/types/nutrition.type";
 
 export const nutritionService = {
   getNutritionComponents: async (): Promise<ApiResponse<INutritionComponent[]>> => {
-    const res = await privateAxios.get<ApiResponse<INutritionComponent[]>>(
-      "/nutrition-components"
-    );
     return res as unknown as ApiResponse<INutritionComponent[]>;
+  },
+
+  getNutrients: async (): Promise<ApiResponse<INutrient[]>> => {
+    const res = await privateAxios.get<ApiResponse<INutrient[]>>("/nutrients");
+    return res as unknown as ApiResponse<INutrient[]>;
   },
 
   getNutritionComponentsPaginated: async (params: {

@@ -63,6 +63,11 @@ export const ingredientService = {
     return res as unknown as IBackendPaginatedResponse<IIngredient>;
   },
 
+  getIngredientById: async (id: number): Promise<ApiResponse<IIngredient>> => {
+    const res = await privateAxios.get<ApiResponse<IIngredient>>(`/ingredients/${id}`);
+    return res as unknown as ApiResponse<IIngredient>;
+  },
+
   createIngredient: async (data: FormData): Promise<ApiResponse<IIngredient>> => {
     const res = await privateAxios.post<ApiResponse<IIngredient>>("/ingredients", data, {
       headers: { "Content-Type": "multipart/form-data" },

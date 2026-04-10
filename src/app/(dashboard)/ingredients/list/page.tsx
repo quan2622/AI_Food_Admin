@@ -3,7 +3,7 @@
 import * as React from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { Eye, MoreHorizontal, Pencil, Trash2, Apple } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2, Apple, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ingredientService } from "@/services/ingredientService";
 import type { IIngredient } from "@/types/ingredient.type";
 import { IngredientFormDialog } from "@/components/ingredients/ingredient-form-dialog";
+import { IngredientDetailDialog } from "@/components/ingredients/ingredient-detail-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImagePreviewDialog } from "@/components/image-preview-dialog";
@@ -72,6 +73,8 @@ const columns: ColumnDef<IIngredient>[] = [
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => meta?.onAction("view", row.original)}><Eye className="mr-2 h-4 w-4" /> Xem chi tiết</DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => meta?.onAction("edit", row.original)}><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => meta?.onAction("delete", row.original)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
@@ -96,6 +99,7 @@ export default function IngredientsListPage() {
   const [formOpen, setFormOpen] = React.useState(false);
   const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
   const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [detailOpen, setDetailOpen] = React.useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = React.useState<string | null>(null);
 
   const fetchIngredients = React.useCallback(async () => {
@@ -127,8 +131,11 @@ export default function IngredientsListPage() {
     fetchIngredients();
   }, [fetchIngredients]);
 
-  const handleAction = React.useCallback((action: "edit" | "delete", item: IIngredient) => {
+  const handleAction = React.useCallback((action: "edit" | "delete" | "view", item: IIngredient) => {
     setSelectedItem(item);
+    if (action === "view") {
+      setDetailOpen(true);
+    }
     if (action === "edit") {
       setFormMode("edit");
       setFormOpen(true);
@@ -166,7 +173,7 @@ export default function IngredientsListPage() {
             setFormMode("create");
             setFormOpen(true);
           }}>
-            <Apple className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" />
             Tạo nguyên liệu
           </Button>
         }
@@ -186,6 +193,11 @@ export default function IngredientsListPage() {
         mode={formMode}
         initialData={selectedItem}
         onSuccess={fetchIngredients}
+      />
+      <IngredientDetailDialog
+        id={selectedItem?.id || null}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
       />
       
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

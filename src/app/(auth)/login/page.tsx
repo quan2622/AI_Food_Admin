@@ -58,25 +58,28 @@ const LoginPage = () => {
         router.push("/");
       } else {
         const errorMsg = res.metadata?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+        setError(errorMsg);
         toast.error("Lỗi đăng nhập", {
           description: errorMsg,
         });
       }
-    } catch (err: unknown) {
-      // Tránh log lỗi nếu nó chỉ là một object rỗng (thường gặp khi serializing Axios error)
-      console.error("Login process encountered an error:", err);
+    } catch (err: any) {
+      console.error("Login process failed details:", {
+        message: err?.message,
+        metadata: err?.metadata,
+        data: err?.response?.data
+      });
       
       let errorMsg = "Đã xảy ra lỗi hệ thống. Vui lòng kiểm tra lại mạng.";
       
       if (typeof err === "string") {
         errorMsg = err;
       } else if (err && typeof err === "object") {
-        const anyErr = err as any;
-        // Trích xuất message từ cấu hình API chuẩn { metadata: { message } }
-        errorMsg = anyErr.metadata?.message || anyErr.message || errorMsg;
-      } else if (err instanceof Error) {
-        errorMsg = err.message;
+        // Thứ tự ưu tiên: metadata.message (từ backend) > message (Axios/Error) > fallback
+        errorMsg = err.metadata?.message || err.message || errorMsg;
       }
+      
+      setError(errorMsg);
       
       toast.error("Lỗi hệ thống", {
         description: errorMsg,

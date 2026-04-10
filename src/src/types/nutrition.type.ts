@@ -26,6 +26,12 @@ export interface INutritionComponent {
   updateAt?: string;
 }
 
+export interface INutrient {
+  id: number;
+  name: string;
+  unit: string;
+}
+
 export interface ICreateNutritionComponentRequest {
   name: string;
   unit: UnitType | string;

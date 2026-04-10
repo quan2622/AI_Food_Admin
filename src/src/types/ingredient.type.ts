@@ -28,6 +28,18 @@ export interface IIngredient {
   foodsCount?: number;
   createdAt?: string;
   updatedAt?: string;
+  ingredientNutritions?: Array<{
+    servingSize: number;
+    servingUnit: string;
+    values: Array<{
+      value: number;
+      nutrient: {
+        id: number;
+        name: string;
+        unit: string;
+      };
+    }>;
+  }>;
 }
 
 export interface ICreateIngredientRequest {

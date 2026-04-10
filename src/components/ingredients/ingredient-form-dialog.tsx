@@ -17,8 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ingredientService } from "@/services/ingredientService";
-import { Loader2, Apple, Upload, X } from "lucide-react";
+import { Loader2, Apple, Upload, X, Activity, Droplets, Zap, Wheat } from "lucide-react";
 import type { IIngredient } from "@/types/ingredient.type";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formSchema = z.object({
   ingredientName: z
@@ -27,6 +28,11 @@ const formSchema = z.object({
     .max(255, { message: "Tên tối đa 255 ký tự" }),
   description: z.string().max(1000, { message: "Mô tả tối đa 1000 ký tự" }).optional(),
   image: z.any().optional(),
+  // Fixed nutrition fields (Calories removed)
+  protein: z.string().optional(),
+  fat: z.string().optional(),
+  carbs: z.string().optional(),
+  fiber: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -39,6 +45,14 @@ interface IngredientFormDialogProps {
   mode?: Mode;
   initialData?: IIngredient | null;
 }
+
+// Nutrient IDs mapping (Calories ID 1 removed as requested)
+const NUTRIENT_IDS = {
+  protein: 2,
+  fat: 3,
+  carbs: 4,
+  fiber: 5,
+};
 
 export function IngredientFormDialog({
   open,
@@ -59,19 +73,40 @@ export function IngredientFormDialog({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { ingredientName: "", description: "" },
+    defaultValues: { 
+      ingredientName: "", 
+      description: "",
+      protein: "",
+      fat: "",
+      carbs: "",
+      fiber: ""
+    },
   });
 
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && initialData) {
+      const nutriValues = initialData.ingredientNutritions?.[0]?.values || [];
+      const getVal = (id: number) => nutriValues.find(v => v.nutrient.id === id)?.value?.toString() || "";
+
       reset({
         ingredientName: initialData.ingredientName,
         description: initialData.description ?? "",
+        protein: getVal(NUTRIENT_IDS.protein),
+        fat: getVal(NUTRIENT_IDS.fat),
+        carbs: getVal(NUTRIENT_IDS.carbs),
+        fiber: getVal(NUTRIENT_IDS.fiber),
       });
       setPreview(initialData.imageUrl || null);
     } else {
-      reset({ ingredientName: "", description: "" });
+      reset({ 
+        ingredientName: "", 
+        description: "",
+        protein: "",
+        fat: "",
+        carbs: "",
+        fiber: ""
+      });
       setPreview(null);
     }
   }, [open, mode, initialData, reset]);
@@ -90,8 +125,6 @@ export function IngredientFormDialog({
 
   const cancelImage = () => {
     setValue("image", undefined);
-    // If editing, reverting to old image or wiping depending on logic.
-    // For now, wipe completely
     setPreview(null);
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -115,6 +148,18 @@ export function IngredientFormDialog({
         formData.append("image", values.image);
       }
 
+      const nutritionItems = [
+        { id: NUTRIENT_IDS.protein, value: values.protein },
+        { id: NUTRIENT_IDS.fat, value: values.fat },
+        { id: NUTRIENT_IDS.carbs, value: values.carbs },
+        { id: NUTRIENT_IDS.fiber, value: values.fiber },
+      ].filter(item => item.value !== "" && item.value !== undefined);
+
+      nutritionItems.forEach((item, index) => {
+        formData.append(`nutritionValues[${index}][nutrientId]`, item.id.toString());
+        formData.append(`nutritionValues[${index}][value]`, item.value!);
+      });
+
       if (mode === "create") {
         await ingredientService.createIngredient(formData);
         toast.success("Tạo nguyên liệu thành công!");
@@ -126,9 +171,7 @@ export function IngredientFormDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
-      const msg =
-        error?.message ||
-        (mode === "create" ? "Tạo thất bại" : "Cập nhật thất bại");
+      const msg = error?.metadata?.message || error?.message || (mode === "create" ? "Tạo thất bại" : "Cập nhật thất bại");
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -137,106 +180,186 @@ export function IngredientFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10">
-              <Apple className="h-5 w-5 text-green-600" />
+      <DialogContent className="sm:max-w-[700px] max-h-[95vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
+        <DialogHeader className="p-6 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 shadow-sm">
+              <Apple className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <DialogTitle>
+              <DialogTitle className="text-xl font-black text-slate-900 tracking-tight">
                 {mode === "create" ? "Tạo nguyên liệu" : "Cập nhật nguyên liệu"}
               </DialogTitle>
-              <DialogDescription className="text-xs">
+              <DialogDescription className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                 {mode === "create"
-                  ? "Thêm nguyên liệu mới, hỗ trợ tải ảnh lên hệ thống"
-                  : `Đang chỉnh sửa: ${initialData?.ingredientName}`}
+                  ? "Cung cấp chỉ số dinh dưỡng chính xác per 100g"
+                  : `ID: #${initialData?.id} — ${initialData?.ingredientName}`}
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
-          {/* Ảnh */}
-          <div className="space-y-2">
-            <Label>
-              Hình ảnh nguyên liệu {mode === "create" && <span className="text-destructive">*</span>}
-            </Label>
-            <div className="flex flex-col gap-3">
-              {preview ? (
-                <div className="relative w-max h-32 aspect-square rounded-lg border overflow-hidden group">
-                  <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button type="button" variant="destructive" size="icon-sm" onClick={cancelImage}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
+        <ScrollArea className="flex-1 px-6 pb-6 mt-2">
+          <form className="space-y-8 pt-2">
+            {/* Top Row: Responsive Image (Left) + Name/Desc (Right) */}
+            <div className="flex flex-col md:flex-row gap-8 items-start">
+              {/* Left Column: Image */}
+              <div className="shrink-0 space-y-3">
+                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                  Ảnh nguyên liệu {mode === "create" && <span className="text-rose-500">*</span>}
+                </Label>
+                <div className="flex flex-col gap-3">
+                  {preview ? (
+                    <div className="relative w-48 h-48 rounded-2xl border border-slate-100 overflow-hidden group shadow-sm bg-slate-50 transition-all">
+                      <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-[2px]">
+                        <Button type="button" variant="destructive" size="icon" className="h-9 w-9 rounded-xl" onClick={cancelImage}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      className="w-48 h-48 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 hover:border-emerald-200 hover:text-emerald-500 transition-all cursor-pointer group"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-7 w-7 mb-2.5 group-hover:-translate-y-1 transition-transform" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Tải ảnh lên</span>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                  />
                 </div>
-              ) : (
-                <div 
-                  className="w-32 h-32 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-6 w-6 mb-2" />
-                  <span className="text-xs font-medium">Tải ảnh lên</span>
+              </div>
+
+              {/* Right Column: Name & Description (Shorter) */}
+              <div className="flex-1 space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="ing-name" className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                    Tên nguyên liệu <span className="text-rose-500">*</span>
+                  </Label>
+                  <Input
+                    id="ing-name"
+                    placeholder="VD: Thịt gà, Bún, Cà chua..."
+                    className="rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white h-11 font-bold text-[15px] transition-all px-4"
+                    {...register("ingredientName")}
+                  />
+                  {errors.ingredientName && (
+                    <p className="text-[11px] font-bold text-rose-500 pl-1">{errors.ingredientName.message}</p>
+                  )}
                 </div>
-              )}
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-              />
+
+                <div className="space-y-2">
+                  <Label htmlFor="ing-description" className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Mô tả ngắn</Label>
+                  <Textarea
+                    id="ing-description"
+                    placeholder="Mô tả ngắn gọn về sản phẩm..."
+                    className="resize-none rounded-2xl border-slate-100 bg-slate-50/30 focus:bg-white transition-all p-4 h-[86px] text-sm"
+                    {...register("description")}
+                  />
+                </div>
+              </div>
             </div>
-            {errors.image && (
-                <p className="text-sm text-destructive">{errors.image.message as string}</p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ing-name">
-              Tên nguyên liệu <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="ing-name"
-              placeholder="VD: Thịt gà, Bún, Cà chua..."
-              {...register("ingredientName")}
-            />
-            {errors.ingredientName && (
-              <p className="text-sm text-destructive">{errors.ingredientName.message}</p>
-            )}
-          </div>
+            {/* Bottom Section: 4 Nutrition Cards */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
+                <Activity className="w-4 h-4 text-emerald-500" />
+                <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">
+                  Thành phần dinh dưỡng chính (per 100g)
+                </span>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ing-description">Mô tả</Label>
-            <Textarea
-              id="ing-description"
-              placeholder="Mô tả về nguyên liệu này..."
-              rows={3}
-              className="resize-none"
-              {...register("description")}
-            />
-            {errors.description && (
-              <p className="text-sm text-destructive">{errors.description.message}</p>
-            )}
-          </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Protein */}
+                <div className="space-y-2 bg-blue-50/30 p-4 rounded-2xl border border-blue-100/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Zap className="w-3.5 h-3.5 text-blue-500" />
+                    <Label className="text-[10px] font-black text-blue-600 uppercase tracking-wider">Protein (g)</Label>
+                  </div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="0.0"
+                    className="h-10 rounded-xl border-blue-100 bg-white shadow-sm font-bold text-slate-700"
+                    {...register("protein")}
+                  />
+                </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={loading}
-              onClick={() => onOpenChange(false)}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {mode === "create" ? "Tạo" : "Lưu thay đổi"}
-            </Button>
-          </div>
-        </form>
+                {/* Carbs */}
+                <div className="space-y-2 bg-amber-50/30 p-4 rounded-2xl border border-amber-100/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Wheat className="w-3.5 h-3.5 text-amber-500" />
+                    <Label className="text-[10px] font-black text-amber-600 uppercase tracking-wider">Tinh bột (g)</Label>
+                  </div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="0.0"
+                    className="h-10 rounded-xl border-amber-100 bg-white shadow-sm font-bold text-slate-700"
+                    {...register("carbs")}
+                  />
+                </div>
+
+                {/* Fat */}
+                <div className="space-y-2 bg-rose-50/30 p-4 rounded-2xl border border-rose-100/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Droplets className="w-3.5 h-3.5 text-rose-500" />
+                    <Label className="text-[10px] font-black text-rose-600 uppercase tracking-wider">Chất béo (g)</Label>
+                  </div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="0.0"
+                    className="h-10 rounded-xl border-rose-100 bg-white shadow-sm font-bold text-slate-700"
+                    {...register("fat")}
+                  />
+                </div>
+
+                {/* Fiber */}
+                <div className="space-y-2 bg-emerald-50/30 p-4 rounded-2xl border border-emerald-100/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                    <Label className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Chất xơ (g)</Label>
+                  </div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="0.0"
+                    className="h-10 rounded-xl border-emerald-100 bg-white shadow-sm font-bold text-slate-700"
+                    {...register("fiber")}
+                  />
+                </div>
+              </div>
+            </div>
+          </form>
+        </ScrollArea>
+
+        <div className="flex justify-end gap-3 p-6 border-t border-slate-50 bg-white/50 backdrop-blur-sm">
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={loading}
+            onClick={() => onOpenChange(false)}
+            className="rounded-xl h-11 px-6 font-bold text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+          >
+            Hủy
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={loading}
+            onClick={handleSubmit(onSubmit)}
+            className="rounded-xl h-11 px-8 font-black text-[11px] uppercase tracking-widest bg-slate-900 text-white hover:bg-emerald-600 hover:shadow-lg transition-all active:scale-[0.98]"
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {mode === "create" ? "Tạo ngay" : "Lưu thay đổi"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

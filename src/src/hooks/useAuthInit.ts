@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { authService } from "@/services/authService";
 import { useAuthStore } from "@/stores/authStore";
+import { toast } from "sonner";
 
 /**
  * Hook để khởi tạo trạng thái Auth khi ứng dụng bắt đầu load.
@@ -39,10 +40,18 @@ export const useAuthInit = () => {
       } catch (error: any) {
         // Lỗi 401: Interceptor của privateAxios sẽ tự động xử lý refresh hoặc logout
         // Ở đây chúng ta giữ nguyên trạng thái cache nếu là lỗi Network/Server để tránh logout nhầm
-        if (error.isAxiosError && error.message === "Network Error") {
+        
+        const errorMsg = error?.metadata?.message || error?.message || "";
+        
+        if (errorMsg === "Tài khoản không tồn tại") {
+          logoutAction();
+          toast.error("Phiên đăng nhập không hợp lệ", {
+            description: "Tài khoản của bạn không tồn tại trên hệ thống. Vui lòng đăng nhập lại.",
+          });
+        } else if (error.isAxiosError && error.message === "Network Error") {
           console.warn("Auth init sync failed: Backend unreachable (Network Error).");
         } else {
-          console.error("Auth init sync failed:", error?.message || error);
+          console.error("Auth init sync failed:", errorMsg || error);
         }
       } finally {
         setIsInitializing(false);
