@@ -49,28 +49,15 @@ export default function AdminDashboardV2() {
     const fetchDashboard = async () => {
       try {
         const response = await dashboardService.getOverview();
-        const inner = response.data;
-        if (inner?.EC === 0 && inner.result) {
-          // Wait, the new wrapper usually puts result in data.data or data.result? 
-          // Our docs show: {"data": { "keyMetrics": ... }} directly or {"data": { "EC":0, "result": {...} }} ?
-          // Wait, the API doc says: 
-          // "data": { "keyMetrics": ... }
-          // This means there is no "result" wrapper inside "data" or "EC" inside "data" like other endpoints!
-          // Actually, let me check the doc again.
-          // The doc says:
-          /*
-          {
-            "metadata": { "statusCode": 200, "EC": 0 },
-            "data": { "keyMetrics": ... }
-          }
-           */
-          setData(response.data as unknown as IDashboardV2Overview);
+        if (response?.metadata?.EC === 0) {
+          setData(response.data);
         } else {
           // fallback if wrapped with EC inside data
-          if ((inner as any)?.EC === 0 && (inner as any)?.result) {
-            setData((inner as any).result);
+          const inner = response.data as any;
+          if (inner?.EC === 0 && inner?.result) {
+            setData(inner.result);
           } else {
-            setData((response as any).data);
+            setData(response.data);
           }
         }
       } catch (err: any) {

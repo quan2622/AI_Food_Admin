@@ -42,11 +42,11 @@ export const adminMenu: MenuGroup[] = [
         url: "/",
         icon: LayoutDashboard,
       },
-      {
-        title: "Phân tích",
-        url: "/analytics",
-        icon: PieChart,
-      },
+      // {
+      //   title: "Phân tích",
+      //   url: "/analytics",
+      //   icon: PieChart,
+      // },
     ],
   },
   {
@@ -147,27 +147,27 @@ export const adminMenu: MenuGroup[] = [
           },
         ],
       },
-      {
-        title: "AI & ML",
-        icon: Cpu,
-        children: [
-          {
-            title: "AI Models",
-            url: "/ai/models",
-            icon: Cpu,
-          },
-          {
-            title: "Training Jobs",
-            url: "/ai/training",
-            icon: Zap,
-          },
-          {
-            title: "Recommendations",
-            url: "/ai/recommendations",
-            icon: Sparkles,
-          },
-        ],
-      },
+      // {
+      //   title: "AI & ML",
+      //   icon: Cpu,
+      //   children: [
+      //     {
+      //       title: "AI Models",
+      //       url: "/ai/models",
+      //       icon: Cpu,
+      //     },
+      //     {
+      //       title: "Training Jobs",
+      //       url: "/ai/training",
+      //       icon: Zap,
+      //     },
+      //     {
+      //       title: "Recommendations",
+      //       url: "/ai/recommendations",
+      //       icon: Sparkles,
+      //     },
+      //   ],
+      // },
       {
         title: "User Submissions",
         url: "/submissions",
@@ -183,11 +183,6 @@ export const adminMenu: MenuGroup[] = [
         title: "All Codes",
         url: "/system/codes",
         icon: Code,
-      },
-      {
-        title: "Admin Roles",
-        url: "/system/roles",
-        icon: ShieldCheck,
       },
     ],
   },
