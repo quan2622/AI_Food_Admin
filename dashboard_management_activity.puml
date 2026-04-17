@@ -1,0 +1,63 @@
+@startuml dashboard_management_activity
+skinparam monochrome false
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+title Sơ đồ Activity: Chức năng Theo dõi & Quản lý Dashboard (Admin)
+
+|Quản trị viên|
+|Giao diện Admin|
+|Hệ thống Backend|
+
+|Quản trị viên|
+start
+:Sau khi vào hệ thống, chủ động nhấp\nchọn Trang Tổng Quan (Dashboard);
+
+|Giao diện Admin|
+:Tạo khung xương chờ tải dữ liệu (Skeleton Loading);
+:Đặt tham số cấu hình hiển thị mặc định\n(Ví dụ: Lọc truy xuất theo 7 Ngày Gần Nhất);
+:Kích hoạt luồng Fetch API lấy gói Thông số Tổng quan;
+
+|Hệ thống Backend|
+:Đối chiếu và xác thực quyền hạn Token mức Admin;
+:Kích hoạt hệ cơ sở truy vấn tập hợp (Database Aggregation)\nchạy song song các tiến trình Thống kê;
+:Tính toán các chỉ số Core Metrics:\n- Tăng trưởng User Đăng ký mới\n- Lưu lượng sử dụng tính năng báo cáo AI\n- Doanh thu hoặc Insight Món Ăn/Log Món;
+:Gói và ánh xạ lại Object Dữ liệu JSON khổ lớn;
+:Bắn Data trả ngược về cho Client;
+
+|Giao diện Admin|
+:Nhận dữ liệu, kết thúc quá trình ngâm Skeleton;
+:Nạp tham số vào các Module thư viện mở (Recharts/Chart.js)\nđể vẽ các mảng Line/Bar Chart hiển thị trực quan;
+:Trình diễn số liệu lên các Thẻ Thống kê (Quick Stat Cards);
+
+|Quản trị viên|
+repeat :Đánh giá Dữ liệu và Tương tác nghiệp vụ gốc;
+  :Thực hiện tinh chỉnh Bộ lọc Mở rộng\n(Chọn Khoảng ngày mới, Tuần/Tháng/Năm tùy định);
+  :Hoặc chủ động chọn xuất File báo cáo (Export Excel/PDF);
+  
+  |Giao diện Admin|
+  :Lắng nghe thay đổi biến Parameter (OnChange);\nKhóa khối màn biểu đồ với vòng xoay Loading nhẹ;
+  :Truyền lại chuỗi tham số `?startDate&endDate`\nhay `type=export` thông qua API Call chặng 2;
+  
+  |Hệ thống Backend|
+  :Nhận truy vấn Filter, tái tính toán Query\ntrong phổ thời gian bị bó hẹp giới hạn;
+  
+  backward:Cầu nối trả về tắc nghẽn (Timeout)\nhoặc phiên đăng nhập báo hết hạn đột ngột (401);
+repeat while (Phản hồi Dữ liệu Backend mượt mà\nvà tuân thủ toàn tuyến Guard?) is (Sập/Treo Dữ liệu)
+-> Thông suốt kết nối;
+
+|Hệ thống Backend|
+:Chèn dữ liệu chắt lọc mới gửi về (JSON/Blob File Stream);
+:Ghi bảo mật Audit-Log hành động xuất File (Nếu có export);
+
+|Giao diện Admin|
+:Bóc tách tập số liệu và Vẽ lại (Re-render) các khối Biểu đồ;
+:Xử lý Auto-download Trigger tự tải File về máy (Nếu chọn Export);
+:Tắt mọi hiệu ứng Loading màn hình;
+
+|Quản trị viên|
+:Thu thập hoàn thiện đầy đủ chỉ số Insight,\nxem Báo cáo xuất ra và chốt lại công năng;
+stop
+@enduml

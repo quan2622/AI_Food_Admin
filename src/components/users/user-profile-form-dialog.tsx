@@ -155,7 +155,7 @@ export function UserProfileFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Cập nhật User Profile</DialogTitle>
+          <DialogTitle>Cập nhật hồ sơ người dùng</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={handleSubmit(onSubmit as any)}

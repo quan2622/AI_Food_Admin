@@ -1,4 +1,4 @@
-
+import type { UnitType } from "@/types/nutrition.type";
 
 export interface IFoodCategory {
   id: number;
@@ -49,12 +49,19 @@ export interface IFood {
   foodIngredients?: IFoodIngredient[];
 }
 
+export interface IFoodIngredientPayload {
+  ingredientId: number;
+  quantity: number;
+  unit: UnitType;
+}
+
 export interface ICreateFoodRequest {
   foodName: string;
   description?: string;
   imageUrl?: string;
   categoryId?: number;
   defaultServingGrams?: number;
+  ingredients?: IFoodIngredientPayload[];
 }
 
 export interface IUpdateFoodRequest {
@@ -63,6 +70,7 @@ export interface IUpdateFoodRequest {
   imageUrl?: string;
   categoryId?: number;
   defaultServingGrams?: number;
+  ingredients?: IFoodIngredientPayload[];
 }
 
 export interface ICreateCategoryRequest {

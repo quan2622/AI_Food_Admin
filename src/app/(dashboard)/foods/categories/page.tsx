@@ -4,8 +4,9 @@ import * as React from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddButton } from "@/components/ui/add-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,17 +215,14 @@ export default function FoodCategoriesPage() {
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       <DataTable
         toolbarActions={
-          <Button
+          <AddButton
             onClick={() => {
               setSelectedCategory(null);
               setFormMode("create");
               setFormOpen(true);
             }}
-            className="shadow-sm h-8"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo danh mục mới
-          </Button>
+            label="Thêm danh mục mới"
+          />
         }
         columns={columns}
         data={data}

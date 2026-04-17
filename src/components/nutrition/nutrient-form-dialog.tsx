@@ -132,8 +132,8 @@ export function NutrientFormDialog({
               </DialogTitle>
               <DialogDescription className="text-xs">
                 {mode === "create"
-                  ? "Thêm nutrient mới (nutrition-components)"
-                  : `Đang chỉnh: ${initialData?.name ?? ""}`}
+                  ? "Thêm chỉ số dinh dưỡng mới vào hệ thống"
+                  : `Đang chỉnh sửa: ${initialData?.name ?? ""}`}
               </DialogDescription>
             </div>
           </div>

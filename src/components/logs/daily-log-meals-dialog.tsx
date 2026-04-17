@@ -127,7 +127,7 @@ function MealGroupItemsTable({ group }: { group: IMealGroup }) {
           <TableRow>
             {showMealColumn && (
               <TableHead className="w-[104px] align-middle text-xs font-normal text-muted-foreground">
-                Giờ / Meal
+                Giờ / Bữa
               </TableHead>
             )}
             <TableHead className="w-12" />
@@ -322,15 +322,15 @@ export function DailyLogMealsDialog({
           const { statusCode, message } = getErrorPayload(e);
           if (statusCode === 404) {
             toast.error(
-              message || `Daily log #${dailyLog.id} không tồn tại.`
+              message || `Nhật ký ngày #${dailyLog.id} không tồn tại.`
             );
           } else if (statusCode === 403) {
             toast.error(
               message ||
-                "Daily log này không thuộc user đã chỉ định."
+                "Nhật ký ngày này không thuộc người dùng đã chỉ định."
             );
           } else {
-            toast.error(message || "Không thể tải chi tiết daily log.");
+            toast.error(message || "Không thể tải chi tiết nhật ký ngày.");
           }
         }
       } finally {
@@ -374,7 +374,7 @@ export function DailyLogMealsDialog({
         <DialogHeader className="min-h-0 max-h-[min(55vh,28rem)] shrink-0 overflow-y-auto border-b border-border px-6 pt-6 pb-4 space-y-0">
           <DialogTitle asChild>
             <div className="flex flex-wrap items-center gap-3 text-left text-lg font-semibold tracking-tight">
-              <span>Chi tiết Daily log</span>
+              <span>Chi tiết nhật ký ngày</span>
               <span
                 className="hidden h-4 w-px bg-border sm:inline-block"
                 aria-hidden
@@ -444,7 +444,7 @@ export function DailyLogMealsDialog({
             </p>
           ) : !hasMealContent(detail) ? (
             <p className="text-sm text-muted-foreground py-8 text-center px-6">
-              Không có bữa ăn nào trong daily log này.
+              Không có bữa ăn nào trong nhật ký ngày này.
             </p>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-6 pb-6 pt-4">
@@ -544,7 +544,7 @@ export function DailyLogMealsDialog({
                                 </span>
                               )}
                               <span className="text-xs font-mono text-muted-foreground">
-                                Meal #{meal.id}
+                                Bữa ăn #{meal.id}
                               </span>
                             </div>
                           </AccordionTrigger>

@@ -98,12 +98,12 @@ export function MealDetailDialog({
           const { statusCode, message } = getErrorPayload(e);
           if (statusCode === 404) {
             toast.error(
-              message || `Meal #${context.mealId} không tồn tại.`
+              message || `Bữa ăn #${context.mealId} không tồn tại.`
             );
           } else if (statusCode === 403) {
             toast.error(
               message ||
-                "Bữa ăn này không thuộc user đã chỉ định."
+                "Bữa ăn này không thuộc người dùng đã chỉ định."
             );
           } else {
             toast.error(message || "Không thể tải chi tiết bữa ăn.");
@@ -177,7 +177,7 @@ export function MealDetailDialog({
                   </span>
                 </InfoField>
                 {!loading && meal?.dailyLog != null && (
-                  <InfoField label="Daily log">
+                  <InfoField label="Nhật ký ngày">
                     <span className="font-medium">#{meal.dailyLog.id}</span>
                     {logDateStr && (
                       <span className="text-muted-foreground">

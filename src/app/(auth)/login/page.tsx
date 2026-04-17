@@ -132,7 +132,7 @@ const LoginPage = () => {
                     Nutri<span className="text-[#CAFD00] font-extrabold italic">Life</span>
                   </span>
                   <span className="text-[9px] font-bold text-white/40 uppercase tracking-[0.2em] mt-0.5">
-                    Admin Panel
+                    Bảng quản trị
                   </span>
                 </div>
               </motion.div>
@@ -170,7 +170,7 @@ const LoginPage = () => {
               {[
                 { label: "Người dùng", value: "2.4K+" },
                 { label: "Thực phẩm", value: "15K+" },
-                { label: "API Calls", value: "1.2M+" },
+                { label: "Lượt gọi API", value: "1.2M+" },
               ].map((stat) => (
                 <div key={stat.label} className="login-stat-box">
                   <span className="text-lg font-bold text-white">
@@ -197,7 +197,7 @@ const LoginPage = () => {
                 Nutri<span className="login-brand-accent font-extrabold italic">Life</span>
               </span>
               <span className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mt-0.5">
-                Admin Panel
+                Bảng quản trị
               </span>
             </div>
           </div>

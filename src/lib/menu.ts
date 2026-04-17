@@ -38,7 +38,7 @@ export const adminMenu: MenuGroup[] = [
     groupName: "Tổng quan",
     items: [
       {
-        title: "Dashboard",
+        title: "Tổng quan",
         url: "/",
         icon: LayoutDashboard,
       },
@@ -53,21 +53,21 @@ export const adminMenu: MenuGroup[] = [
     groupName: "Quản lý",
     items: [
       {
-        title: "User",
+        title: "Người dùng",
         icon: Users,
         children: [
           {
-            title: "Danh sách Users",
+            title: "Danh sách người dùng",
             url: "/users/list",
             icon: Users,
           },
           {
-            title: "User Profiles",
+            title: "Hồ sơ người dùng",
             url: "/users/profiles",
             icon: User,
           },
           {
-            title: "User Allergies",
+            title: "Dị ứng người dùng",
             url: "/users/allergies",
             icon: ShieldAlert,
           },
@@ -83,7 +83,7 @@ export const adminMenu: MenuGroup[] = [
             icon: Utensils,
           },
           {
-            title: "Phân loại (Categories)",
+            title: "Phân loại (Danh mục)",
             url: "/foods/categories",
             icon: Layers,
           },
@@ -104,7 +104,7 @@ export const adminMenu: MenuGroup[] = [
             icon: Package,
           },
           {
-            title: "Chất gây dị ứng (Allergens)",
+            title: "Chất gây dị ứng",
             url: "/ingredients/allergens",
             icon: AlertTriangle,
           },
@@ -120,7 +120,7 @@ export const adminMenu: MenuGroup[] = [
         icon: Activity,
         children: [
           {
-            title: "Chất dinh dưỡng (Nutrients)",
+            title: "Chỉ số dinh dưỡng",
             url: "/nutrition/nutrients",
             icon: Activity,
           },
@@ -132,16 +132,16 @@ export const adminMenu: MenuGroup[] = [
         ],
       },
       {
-        title: "Logs & Tracking",
+        title: "Nhật ký & Theo dõi",
         icon: CalendarDays,
         children: [
           {
-            title: "Daily Logs",
+            title: "Nhật ký hàng ngày",
             url: "/logs/daily",
             icon: CalendarDays,
           },
           {
-            title: "Meals",
+            title: "Bữa ăn",
             url: "/logs/meals",
             icon: Sparkles,
           },
@@ -169,7 +169,7 @@ export const adminMenu: MenuGroup[] = [
       //   ],
       // },
       {
-        title: "User Submissions",
+        title: "Đề xuất người dùng",
         url: "/submissions",
         icon: Inbox,
       },
@@ -180,7 +180,7 @@ export const adminMenu: MenuGroup[] = [
     groupName: "Hệ thống",
     items: [
       {
-        title: "All Codes",
+        title: "Danh mục mã hệ thống",
         url: "/system/codes",
         icon: Code,
       },

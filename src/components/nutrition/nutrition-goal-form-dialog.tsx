@@ -233,8 +233,8 @@ export function NutritionGoalFormDialog({
               </DialogTitle>
               <DialogDescription className="text-xs">
                 {mode === "create"
-                  ? "Theo API POST /nutrition-goals — gắn với user đang đăng nhập."
-                  : `Goal #${initialData?.id ?? ""}`}
+                  ? "Tạo mục tiêu dinh dưỡng gắn với tài khoản quản trị."
+                  : `Mục tiêu #${initialData?.id ?? ""}`}
               </DialogDescription>
             </div>
           </div>

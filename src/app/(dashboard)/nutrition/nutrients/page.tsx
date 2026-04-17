@@ -3,8 +3,9 @@
 import * as React from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { MoreHorizontal, Pencil, Trash2, Plus } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddButton } from "@/components/ui/add-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,7 +106,7 @@ const columns: ColumnDef<INutritionComponent>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => meta?.onAction?.("edit", row.original)}>
-              <Pencil className="mr-2 h-4 w-4" /> Sửa
+              <Pencil className="mr-2 h-4 w-4 text-orange-500" /> Chỉnh sửa
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -185,16 +186,14 @@ export default function NutrientsPage() {
     <div className="flex flex-col gap-6">
       <DataTable
         toolbarActions={
-          <Button
+          <AddButton
             onClick={() => {
               setSelected(null);
               setFormMode("create");
               setFormOpen(true);
             }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo chỉ số mới
-          </Button>
+            label="Thêm chỉ số mới"
+          />
         }
         meta={{ onAction: handleAction }}
         columns={columns}

@@ -1,0 +1,58 @@
+@startuml create_ingredient_activity
+skinparam monochrome false
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+title Sơ đồ Activity: Chức năng Tạo Nguyên Liệu Mới (Admin)
+
+|Quản trị viên|
+|Giao diện Admin|
+|Hệ thống Backend|
+
+|Quản trị viên|
+start
+:Truy cập trang Quản lý nguyên liệu (Ingredients);
+:Click chọn nút "Thêm nguyên liệu mới";
+
+|Giao diện Admin|
+:Mở và hiển thị Popup Form nhập liệu\n(Chứa các trường Tên, Dinh dưỡng, Nhãn Dị ứng...);
+
+|Quản trị viên|
+repeat :Cung cấp thông tin sản phẩm;
+  :Nhập liệu văn bản (Tên, Nguồn dữ liệu USDA/Manual,\nThông số Calo, Protein, Carbs, Fat...);
+  :Upload tệp tin hình ảnh nguyên liệu từ máy tính;
+  :Xác nhận và click "Lưu nguyên liệu";
+  
+  |Giao diện Admin|
+  :Bật trạng thái Loading chặn thao tác kép;
+  :Kiểm tra tính hợp lệ tức thời (Client Validation)\n(Format file ảnh đúng chuẩn, không bỏ trống Text);
+  :Đóng gói dữ liệu tạo thành chuẩn `FormData`\n(Bắt buộc để gửi định dạng Multipart/form-data);
+  :Call API Post `/ingredients` gửi Backend;
+  
+  |Hệ thống Backend|
+  :Kiểm tra Role (Guard) và xác thực Token Admin;
+  :Parse và Tiền xử lý dữ liệu Form nhận được;
+  :Upload vật lý tệp Ảnh lên Cloud Storage\n(Ví dụ: S3, Cloudinary) sinh ra URL lưu trữ gốc;
+  :Xác minh logic toàn vẹn cơ sở dữ liệu\n(Tránh việc Tên nguyên liệu bị trùng lặp...);
+  
+  backward:Giao diện tắt Loading, cảnh báo Lỗi Popup\nvà giữ nguyên dữ liệu chờ Admin sửa lại;
+repeat while (Tuân thủ phân quyền,\ndữ liệu sạch và Upload ảnh thành công?) is (Báo Lỗi)
+-> Hợp lệ;
+
+|Hệ thống Backend|
+:Khởi tạo Transaction lưu Đối tượng Mới (Ingredient)\nvào tập dữ liệu tương ứng dưới Database;
+:Thiết lập móc nối các khóa ngoại\n(Ví dụ: Các Tag gây dị ứng Allergens liên quan);
+:Lưu nhật ký bảo mật tương tác hệ thống (Audit-Log);
+:Trả Signal Response HTTP 201 Created về UI;
+
+|Giao diện Admin|
+:Đóng Modal Form và gỡ bỏ Loading;
+:Hiển thị Toast Notification xanh "Hoàn tất tạo mới";
+:Kích hoạt cơ chế Refetch tải lại Bảng nguyên liệu;
+
+|Quản trị viên|
+:Nhìn thấy nguyên liệu mới trên giao diện\nvà kết thúc luồng quy trình thao tác;
+stop
+@enduml

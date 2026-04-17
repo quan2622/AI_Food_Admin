@@ -3,8 +3,9 @@
 import * as React from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { Eye, MoreHorizontal, Pencil, Trash2, Apple, Plus } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddButton } from "@/components/ui/add-button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -233,14 +234,14 @@ export default function IngredientsListPage() {
     <div className="flex flex-col gap-6">
       <DataTable
         toolbarActions={
-          <Button onClick={() => {
-            setSelectedItem(null);
-            setFormMode("create");
-            setFormOpen(true);
-          }}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo nguyên liệu
-          </Button>
+          <AddButton
+            onClick={() => {
+              setSelectedItem(null);
+              setFormMode("create");
+              setFormOpen(true);
+            }}
+            label="Thêm nguyên liệu mới"
+          />
         }
         meta={{ onAction: handleAction, onImageClick: handleImageClick }}
         columns={columns}

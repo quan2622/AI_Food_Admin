@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { UserFormDialog } from "@/components/users/user-form-dialog";
 import { UserDetailDialog } from "@/components/users/user-detail-dialog";
 import { UserPlus } from "lucide-react";
+import { AddButton } from "@/components/ui/add-button";
 
 interface User {
   id: number;
@@ -79,7 +80,7 @@ const columns: ColumnDef<User>[] = [
     header: "Vai trò",
     cell: ({ row }) => (
       <StatusBadge variant={row.getValue("isAdmin") ? "info" : "muted"}>
-        {row.getValue("isAdmin") ? "Admin" : "User"}
+        {row.getValue("isAdmin") ? "Quản trị viên" : "Người dùng"}
       </StatusBadge>
     ),
     filterFn: (row, id, value) => String(row.getValue(id)) === value,
@@ -88,7 +89,7 @@ const columns: ColumnDef<User>[] = [
     accessorKey: "status",
     header: "Trạng thái",
     cell: ({ row }) => (
-      <StatusBadge variant={row.getValue("status") ? "success" : "danger"}>
+      <StatusBadge variant={row.getValue("status") ? "success" : "danger"} showDot>
         {row.getValue("status") ? "Hoạt động" : "Bị khóa"}
       </StatusBadge>
     ),
@@ -202,14 +203,15 @@ export default function UsersListPage() {
     <div className="flex flex-col gap-6">
       <DataTable
         toolbarActions={
-          <Button onClick={() => {
-            setSelectedUser(null);
-            setFormMode("create");
-            setFormOpen(true);
-          }}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Tạo User mới
-          </Button>
+          <AddButton
+            onClick={() => {
+              setSelectedUser(null);
+              setFormMode("create");
+              setFormOpen(true);
+            }}
+            label="Thêm người dùng mới"
+            icon={UserPlus}
+          />
         }
         defaultColumnVisibility={{ createdAt: false }}
         meta={{ onAction: handleAction }}
@@ -234,8 +236,8 @@ export default function UsersListPage() {
             id: "isAdmin",
             title: "Vai trò",
             options: [
-              { label: "Admin", value: "true" },
-              { label: "User", value: "false" },
+              { label: "Quản trị viên", value: "true" },
+              { label: "Người dùng", value: "false" },
             ],
           },
         ]}
@@ -250,7 +252,7 @@ export default function UsersListPage() {
       <UserDetailDialog
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        user={selectedUser}
+        userId={selectedUser?.id ?? null}
       />
     </div>
   );

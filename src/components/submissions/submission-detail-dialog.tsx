@@ -88,7 +88,7 @@ export function SubmissionDetailDialog({
       const res = await submissionService.approve(detail.id);
       const inner = res?.data;
       if (inner?.EC === 0) {
-        toast.success("Đã duyệt submission");
+        toast.success("Đã duyệt đề xuất");
         onOpenChange(false);
         onSuccess();
       } else {
@@ -114,7 +114,7 @@ export function SubmissionDetailDialog({
       });
       const inner = res?.data;
       if (inner?.EC === 0) {
-        toast.success("Đã từ chối submission");
+        toast.success("Đã từ chối đề xuất");
         onOpenChange(false);
         onSuccess();
       } else {
@@ -132,10 +132,10 @@ export function SubmissionDetailDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Chi tiết Submission #{submissionId}
+            Chi tiết đề xuất #{submissionId}
           </DialogTitle>
           <DialogDescription>
-            Xem thông tin và xử lý submission từ người dùng
+            Xem thông tin và xử lý đề xuất từ người dùng
           </DialogDescription>
         </DialogHeader>
 
@@ -242,7 +242,7 @@ export function SubmissionDetailDialog({
 
             {/* ── Payload ── */}
             <div>
-              <p className="mb-2 text-sm font-semibold">Dữ liệu đề xuất (Payload)</p>
+              <p className="mb-2 text-sm font-semibold">Dữ liệu đề xuất</p>
               <pre className="rounded-lg bg-muted p-3 text-xs overflow-x-auto">
                 {JSON.stringify(detail.payload, null, 2)}
               </pre>
@@ -261,7 +261,7 @@ export function SubmissionDetailDialog({
             {/* ── Admin note (if already processed) ── */}
             {detail.adminNote && (
               <div>
-                <p className="mb-1 text-sm font-semibold">Ghi chú Admin</p>
+                <p className="mb-1 text-sm font-semibold">Ghi chú quản trị viên</p>
                 <p className="rounded-lg border bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-200">
                   {detail.adminNote}
                 </p>

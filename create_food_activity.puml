@@ -1,0 +1,66 @@
+@startuml create_food_activity
+skinparam monochrome false
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+title Sơ đồ Activity: Chức năng Tạo Món Ăn Mới (Admin)
+
+|Quản trị viên|
+|Giao diện Admin|
+|Hệ thống Backend|
+
+|Quản trị viên|
+start
+:Truy cập thư mục Quản lý Món ăn (Foods);
+:Click nút chức năng "Thêm món ăn mới";
+
+|Giao diện Admin|
+:Gửi gọi API nền lấy danh mục Nguyên liệu (Ingredients);
+:Hiển thị giao diện Form định hình công thức nấu ăn;
+
+|Quản trị viên|
+repeat :Thực hiện thiết lập công thức và thông tin;
+  :Nhập các thông tin nền tảng (Tên món, Mô tả món,\nPhân loại bữa ăn: Sáng/Trưa/Tối...);
+  :Tải tệp hình ảnh hoàn thiện của món ăn lên hệ thống;
+  :Thêm các Nguyên liệu (Ingredients) vào công thức\nqua công cụ tìm kiếm và thả danh sách;
+  :Chỉ định chính xác định lượng (Grams) cho từng Nguyên liệu;
+  
+  |Giao diện Admin|
+  :Lắng nghe sự kiện động dữ liệu, tự động tính tổng gộp\nchỉ số Calo, Protein, Carbs, Fats... cho toàn bộ món ăn;
+  
+  |Quản trị viên|
+  :Soát lại chỉ số dinh dưỡng máy tính sinh ra\nvà bấm "Phát hành / Lưu Món ăn";
+  
+  |Giao diện Admin|
+  :Bật thanh Loading báo hiệu quá trình xử lý;
+  :Kiểm tra hợp lệ Client-side (Phải có ít nhất 1 nguyên liệu,\nKhông có trường trống, Check định dạng Ảnh);
+  :Lọc Array công thức ép kiểu chuỗi JSON cứng (Serialize)\nvà gộp cùng Text, File vào trong khuôn `FormData`;
+  :Kích hoạt luồng API POST `/foods` gửi sang Hệ thống;
+  
+  |Hệ thống Backend|
+  :Triển khai check quy định bảo vệ Guard (Quyền Admin);
+  :Ném Ảnh lên kho lưu trữ ngoài (Cloud Storage/S3)\nvà hứng lại liên kết URL tĩnh;
+  :Kiểm thử vòng lặp (Cross-validation) để xem các mã ID\nNguyên liệu gán vào có thực sự tồn tại dưới DB không;
+  
+  backward:Giao diện vô hiệu hóa Loading, báo đỏ Popup Lỗi\nnmời Admin rà soát lại thao tác và ảnh;
+repeat while (Ảnh tải trơn tru, công thức Nguyên liệu\ncó liên kết thực, và vẹn toàn Data?) is (Lỗi Dữ Liệu)
+-> Hoàn Mỹ;
+
+|Hệ thống Backend|
+:Mở cổng Transaction rào chắn đa Bảng (Multi-table);
+:Đẩy cấu trúc Đối tượng Món ăn (Food) vào Bảng chính;
+:Quét luồng lặp insert bản ghi ánh xạ nguyên liệu tương ứng\nvào Bảng phụ/Trung gian (Bảng Food_Ingredient_Relations);
+:Đóng mộc hoàn tất lưu trữ trên sổ Audit-Log CMS;
+:Chuyển trạng thái giao tiếp HTTP 201 Thành Công về UI;
+
+|Giao diện Admin|
+:Dọn dẹp Form Modal và tắt bỏ Loading;
+:Kích hoạt hệ thống Toast thông báo Xanh tạo thành công;
+:Kéo lệnh Refetch nạp lại CSDL bảng Quản lý Món ăn gốc;
+
+|Quản trị viên|
+:Tận mục sở thị Món ăn mới được tạo\nvà kết thúc ca tương tác;
+stop
+@enduml

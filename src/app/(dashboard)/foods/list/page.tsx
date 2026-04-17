@@ -3,8 +3,9 @@
 import React, { useMemo } from "react";
 import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
-import { MoreHorizontal, Pencil, Eye, Trash2, Plus } from "lucide-react";
+import { MoreHorizontal, Pencil, Eye, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddButton } from "@/components/ui/add-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -256,15 +257,13 @@ export default function FoodsListPage() {
           meta={{ onAction: handleAction, onImageClick: handleImageClick }}
           defaultColumnVisibility={{ description: false, createdAt: false }}
           toolbarActions={
-            <Button
+            <AddButton
               onClick={() => {
                 setSelectedFood(null);
                 setFormOpen(true);
               }}
-              className="shadow-sm h-8"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Thêm mới
-            </Button>
+              label="Thêm món ăn mới"
+            />
           }
         />
       </div>

@@ -69,6 +69,12 @@ export interface IUserDetail extends IUser {
   nutritionGoals?: INutritionGoal[];
 }
 
+/** Response shape of GET /users/admin/:id */
+export interface IAdminUserDetail extends IUser {
+  userProfile?: IUserProfile | null;
+  currentGoal?: INutritionGoal | null;
+}
+
 // ─── Request Interfaces ──────────────────────────────────────────────────────
 
 export interface ICreateUserRequest {
@@ -88,6 +94,7 @@ export interface IUpdateUserRequest {
   genderCode?: string;
   birthOfDate?: string;
   isAdmin?: boolean;
+  status?: boolean;
 }
 
 export interface IUpdateUserPasswordRequest {

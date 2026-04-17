@@ -5,6 +5,7 @@ import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { MoreHorizontal, Pencil, Trash2, ShieldPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddButton } from "@/components/ui/add-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,7 +74,7 @@ const columns: ColumnDef<IAllergen>[] = [
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => meta?.onAction("edit", row.original)}><Pencil className="mr-2 h-4 w-4" /> Sửa</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => meta?.onAction("edit", row.original)}><Pencil className="mr-2 h-4 w-4 text-orange-500" /> Chỉnh sửa</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => meta?.onAction("delete", row.original)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Xóa</DropdownMenuItem>
           </DropdownMenuContent>
@@ -155,14 +156,15 @@ export default function AllergensPage() {
     <div className="flex flex-col gap-6">
       <DataTable
         toolbarActions={
-          <Button onClick={() => {
-            setSelectedAllergen(null);
-            setFormMode("create");
-            setFormOpen(true);
-          }}>
-            <ShieldPlus className="mr-2 h-4 w-4" />
-            Tạo Allergen
-          </Button>
+          <AddButton
+            onClick={() => {
+              setSelectedAllergen(null);
+              setFormMode("create");
+              setFormOpen(true);
+            }}
+            label="Thêm chất gây dị ứng"
+            icon={ShieldPlus}
+          />
         }
         meta={{ onAction: handleAction }}
         columns={columns}

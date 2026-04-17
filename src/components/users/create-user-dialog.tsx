@@ -94,7 +94,7 @@ export function CreateUserDialog({ onSuccess }: { onSuccess?: () => void }) {
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
-          Tạo User mới
+          Thêm người dùng mới
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">

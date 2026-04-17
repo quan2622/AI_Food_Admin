@@ -1,0 +1,68 @@
+@startuml user_management_activity
+skinparam monochrome false
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+
+title Sơ đồ Activity: Chức năng Quản lý người dùng (Module Admin)
+
+|Quản trị viên|
+|Giao diện Admin|
+|Hệ thống Backend|
+
+|Quản trị viên|
+start
+:Truy cập module Quản lý người dùng\ntrong trang Dashboard;
+
+|Giao diện Admin|
+:Bật trạng thái Loading;
+:Gọi API `/users` để lấy danh sách\n(Kèm theo các tham số phân trang, bộ lọc);
+
+|Hệ thống Backend|
+:Kiểm tra tính hợp lệ của Token Guard\n(Xác thực quyền Admin);
+:Truy vấn Database lấy danh sách tài khoản;\nTrả về dữ liệu JSON cho Frontend;
+
+|Giao diện Admin|
+:Tắt Loading và Render bảng dữ liệu\n(Data Table) thống kê người dùng;
+
+|Quản trị viên|
+repeat :Quản trị viên thực hiện thao tác tương tác;
+  if (Loại nghiệp vụ?) then (Thêm mới/Sửa thông tin)
+    :Nhập thông tin người dùng vào\nbiểu mẫu (Tên, Email, Phân quyền...);
+    |Giao diện Admin|
+    :Thực hiện Client-side Validation\n(Kiểm tra format email, độ dài chuỗi...);
+    
+  else (Khóa tài khoản / Xóa dữ liệu)
+    |Quản trị viên|
+    :Nhấn chọn hành động nguy hiểm\n(Khóa / Trục xuất người dùng);
+    |Giao diện Admin|
+    :Hiển thị Popup Dialog xác nhận;
+    |Quản trị viên|
+    :Click "Bấm Xác nhận";
+  endif
+
+  |Giao diện Admin|
+  :Đóng gói Payload (Data) và gửi\nyêu cầu API định tuyến tương ứng;
+
+  |Hệ thống Backend|
+  :Xác thực quyền mức cao nhất (Authorization);\nNgăn chặn leo thang đặc quyền;
+  :Kiểm tra quy tắc toàn vẹn hệ thống\n(Ví dụ: Tài khoản email đã tồn tại);
+  
+  backward:Giao diện bắt Exception lỗi và hiển thị\nthông báo rào cản cho Quản trị viên;
+repeat while (Dữ liệu có hợp quy\nvà qua được chốt chặn an ninh?) is (Thất bại)
+-> Thành công;
+
+|Hệ thống Backend|
+:Mở cơ chế Transaction và thực thi truy vấn\nvào Database lưu trữ (INSERT/UPDATE/DELETE);
+:Ghi log Audit (Lịch sử thao tác quản lý)\nđể phục vụ hoạt động truy vết;
+:Trả về mã phản hồi Thành công (200/201 OK);
+
+|Giao diện Admin|
+:Hiển thị Toast Notification (Thông báo xanh);
+:Đồng bộ hóa State hoặc Refetch\nlại bảng danh sách người dùng;
+
+|Quản trị viên|
+:Quan sát kết quả bảng dữ liệu được\ncập nhật và hoàn tất một chu kỳ thao tác;
+stop
+@enduml

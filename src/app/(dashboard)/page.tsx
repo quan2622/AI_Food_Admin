@@ -81,7 +81,7 @@ export default function AdminDashboardV2() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white text-red-500">
         <AlertCircle className="w-5 h-5 mr-2" />
-        <p>{error || "No data available"}</p>
+        <p>{error || "Không có dữ liệu"}</p>
       </div>
     );
   }

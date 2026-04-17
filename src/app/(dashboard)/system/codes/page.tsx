@@ -5,6 +5,7 @@ import { type ColumnDef, type PaginationState } from "@tanstack/react-table";
 import { DataTable, DataTableColumnHeader } from "@/components/data-table";
 import { FileCode2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AddButton } from "@/components/ui/add-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,7 +113,7 @@ const columns: ColumnDef<IAllCode>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => meta?.onAction?.("edit", row.original)}>
-              <Pencil className="mr-2 h-4 w-4" /> Sửa
+              <Pencil className="mr-2 h-4 w-4 text-orange-500" /> Chỉnh sửa
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled className="text-destructive">
@@ -205,16 +206,15 @@ export default function AllCodesPage() {
         meta={{ onAction: handleAction }}
         toolbarActions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button
+            <AddButton
               onClick={() => {
                 setSelectedCode(null);
                 setFormMode("create");
                 setFormOpen(true);
               }}
-            >
-              <FileCode2 className="mr-2 h-4 w-4" />
-              Tạo mã
-            </Button>
+              label="Tạo mã mới"
+              icon={FileCode2}
+            />
             <span className="whitespace-nowrap text-sm text-muted-foreground">
               Nhóm (type)
             </span>

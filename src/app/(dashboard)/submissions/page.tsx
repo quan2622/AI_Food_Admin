@@ -157,6 +157,7 @@ const columns: ColumnDef<IUserSubmission>[] = [
       const s = row.getValue("status") as SubmissionStatus;
       return (
         <StatusBadge
+          showDot
           variant={
             s === "APPROVED" ? "success" : s === "REJECTED" ? "danger" : "warning"
           }

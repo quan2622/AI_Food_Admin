@@ -9,11 +9,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -23,7 +25,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { userService } from "@/services/userService";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck, UserCheck, UserX } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Mode = "create" | "edit";
 
@@ -57,6 +60,7 @@ export function UserFormDialog({
     avatarUrl: z.string().max(500).optional().nullable(),
     birthOfDate: z.string().optional().nullable(),
     isAdmin: z.boolean(),
+    status: z.boolean(),
   });
 
   type FormValues = z.infer<typeof formSchema>;
@@ -78,6 +82,7 @@ export function UserFormDialog({
       avatarUrl: "",
       birthOfDate: "",
       isAdmin: false,
+      status: true,
     },
   });
 
@@ -101,6 +106,7 @@ export function UserFormDialog({
           avatarUrl: initialData.avatarUrl || "",
           birthOfDate: birthDate,
           isAdmin: initialData.isAdmin || false,
+          status: initialData.status !== undefined ? initialData.status : true,
         });
       } else {
         reset({
@@ -111,6 +117,7 @@ export function UserFormDialog({
           avatarUrl: "",
           birthOfDate: "",
           isAdmin: false,
+          status: true,
         });
       }
     }
@@ -120,7 +127,6 @@ export function UserFormDialog({
     try {
       setLoading(true);
 
-      // Lọc các giá trị null hoặc undefined
       const payload: any = {
         email: data.email,
         fullName: data.fullName,
@@ -132,10 +138,12 @@ export function UserFormDialog({
 
       if (mode === "create") {
         payload.password = data.password;
+        // Tài khoản mới luôn active, không cần gửi status
         await userService.createUser(payload);
         toast.success("Tạo người dùng thành công");
       } else {
-        // Nếu API cần thêm fields thì truyền vào
+        // Gửi cả status khi chỉnh sửa
+        payload.status = data.status;
         await userService.updateUser(initialData.id, payload);
         toast.success("Cập nhật thông tin thành công");
       }
@@ -153,6 +161,7 @@ export function UserFormDialog({
   };
 
   const isAdmin = watch("isAdmin");
+  const status = watch("status");
   const genderCode = watch("genderCode") || "UNDEFINED";
 
   return (
@@ -162,14 +171,22 @@ export function UserFormDialog({
           <DialogTitle>
             {mode === "create" ? "Tạo người dùng mới" : "Cập nhật người dùng"}
           </DialogTitle>
+          {mode === "edit" && initialData && (
+            <DialogDescription>
+              ID #{initialData.id} · {initialData.email}
+            </DialogDescription>
+          )}
         </DialogHeader>
+
         <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+          {/* Họ tên */}
           <div className="space-y-2">
             <Label htmlFor="fullName">Họ và tên</Label>
             <Input id="fullName" placeholder="Nguyễn Văn A" {...register("fullName")} />
             {errors.fullName && <p className="text-sm text-red-500">{errors.fullName.message}</p>}
           </div>
 
+          {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -181,19 +198,21 @@ export function UserFormDialog({
             {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
           </div>
 
+          {/* Mật khẩu — chỉ hiện khi create */}
           {mode === "create" && (
             <div className="space-y-2">
               <Label htmlFor="password">Mật khẩu</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="******"
+                placeholder="Tối thiểu 6 ký tự"
                 {...register("password")}
               />
               {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
             </div>
           )}
 
+          {/* Giới tính + Ngày sinh */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="genderCode">Giới tính</Label>
@@ -224,29 +243,74 @@ export function UserFormDialog({
             </div>
           </div>
 
-          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-            <Checkbox
-              id="isAdmin"
-              checked={isAdmin}
-              onCheckedChange={(checked) => setValue("isAdmin", checked === true)}
-            />
-            <div className="space-y-1 leading-none">
-              <Label htmlFor="isAdmin" className="cursor-pointer">
-                Cấp quyền Admin
-              </Label>
-              <p className="text-xs text-muted-foreground pt-1">
-                Người dùng này sẽ có quyền truy cập trang quản trị.
-              </p>
+          {/* ── Quyền hạn & Trạng thái ── */}
+          <div className="rounded-md border divide-y overflow-hidden">
+            {/* Quyền Admin */}
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                <div className="space-y-0.5">
+                  <Label htmlFor="isAdmin" className="cursor-pointer font-medium text-sm">
+                    Quyền quản trị viên
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Cho phép truy cập bảng quản trị
+                  </p>
+                </div>
+              </div>
+              <Checkbox
+                id="isAdmin"
+                checked={isAdmin}
+                onCheckedChange={(checked) => setValue("isAdmin", checked === true)}
+              />
             </div>
+
+            {/* Trạng thái tài khoản — chỉ hiện khi edit */}
+            {mode === "edit" && (
+              <div
+                className={cn(
+                  "flex items-center justify-between px-4 py-3 transition-colors duration-200",
+                  status ? "bg-emerald-500/5" : "bg-red-500/5"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {status ? (
+                    <UserCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  ) : (
+                    <UserX className="h-4 w-4 text-red-500 flex-shrink-0" />
+                  )}
+                  <div className="space-y-0.5">
+                    <Label htmlFor="status" className="cursor-pointer font-medium text-sm">
+                      Trạng thái tài khoản
+                    </Label>
+                    <p
+                      className={cn(
+                        "text-xs font-medium",
+                        status ? "text-emerald-600" : "text-red-500"
+                      )}
+                    >
+                      {status ? "Đang hoạt động" : "Đã bị khóa"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="status"
+                  checked={status}
+                  onCheckedChange={(checked) => setValue("status", checked)}
+                  className={status ? "[&[data-checked]]:bg-emerald-500" : ""}
+                />
+              </div>
+            )}
           </div>
 
-          <div className="flex justify-end pt-4 space-x-2">
+          {/* Actions */}
+          <div className="flex justify-end pt-2 space-x-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {mode === "create" ? "Tạo mới" : "Cập nhật"}
+              {mode === "create" ? "Tạo mới" : "Lưu thay đổi"}
             </Button>
           </div>
         </form>

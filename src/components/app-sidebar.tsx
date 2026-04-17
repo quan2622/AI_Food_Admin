@@ -138,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
           <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
             <span className="font-semibold text-base">AI Food</span>
-            <span className="text-xs text-muted-foreground">Admin Portal</span>
+            <span className="text-xs text-muted-foreground">Bảng quản trị</span>
           </div>
         </Link>
       </SidebarHeader>
@@ -267,7 +267,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </Avatar>
                   <div className="flex flex-col gap-1 leading-none group-data-[collapsible=icon]:hidden">
                     <span className="font-semibold truncate max-w-[150px]">
-                      {user?.fullName || "Admin User"}
+                      {user?.fullName || "Quản trị viên"}
                     </span>
                     <span className="text-xs text-muted-foreground truncate max-w-[150px]">
                       {user?.email || "admin@aifood.vn"}
@@ -297,7 +297,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </Avatar>
                     <div className="flex flex-col gap-1 leading-none">
                       <span className="font-semibold">
-                        {user?.fullName || "Admin User"}
+                        {user?.fullName || "Quản trị viên"}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {user?.email || "admin@aifood.vn"}

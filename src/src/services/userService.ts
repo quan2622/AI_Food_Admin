@@ -6,6 +6,7 @@
 import privateAxios from "@/lib/privateAxios";
 import { ApiResponse, IBackendPaginatedResponse } from "@/types/backend.type";
 import {
+  IAdminUserDetail,
   ICreateUserRequest,
   IUpdateUserPasswordRequest,
   IUpdateUserRequest,
@@ -54,6 +55,15 @@ export const userService = {
   getUserById: async (id: number): Promise<ApiResponse<IUserDetail>> => {
     const res = await privateAxios.get<ApiResponse<IUserDetail>>(`/users/${id}`);
     return res as unknown as ApiResponse<IUserDetail>;
+  },
+
+  /**
+   * Lấy chi tiết User theo ID cho Admin (bao gồm userProfile & currentGoal)
+   * Route: GET /users/admin/:id  (protected by AdminGuard)
+   */
+  getAdminUserById: async (id: number): Promise<ApiResponse<IAdminUserDetail>> => {
+    const res = await privateAxios.get<ApiResponse<IAdminUserDetail>>(`/users/admin/${id}`);
+    return res as unknown as ApiResponse<IAdminUserDetail>;
   },
 
   /**
