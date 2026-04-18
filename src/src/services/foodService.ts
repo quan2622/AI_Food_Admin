@@ -32,7 +32,7 @@ export const foodService = {
   },
 
   /**
-   * Tạo Món ăn mới
+   * Tạo Món ăn mới (JSON)
    */
   createFood: async (data: ICreateFoodRequest): Promise<ApiResponse<IFood>> => {
     const res = await privateAxios.post<ApiResponse<IFood>>("/foods", data);
@@ -40,13 +40,40 @@ export const foodService = {
   },
 
   /**
-   * Cập nhật Món ăn
+   * Tạo Món ăn mới với ảnh (FormData - multipart/form-data)
+   */
+  createFoodFormData: async (
+    formData: FormData
+  ): Promise<ApiResponse<IFood>> => {
+    const res = await privateAxios.post<ApiResponse<IFood>>("/foods", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res as unknown as ApiResponse<IFood>;
+  },
+
+  /**
+   * Cập nhật Món ăn (JSON)
    */
   updateFood: async (
     id: number,
     data: IUpdateFoodRequest
   ): Promise<ApiResponse<IFood>> => {
     const res = await privateAxios.patch<ApiResponse<IFood>>(`/foods/${id}`, data);
+    return res as unknown as ApiResponse<IFood>;
+  },
+
+  /**
+   * Cập nhật Món ăn với ảnh (FormData - multipart/form-data)
+   */
+  updateFoodFormData: async (
+    id: number,
+    formData: FormData
+  ): Promise<ApiResponse<IFood>> => {
+    const res = await privateAxios.patch<ApiResponse<IFood>>(
+      `/foods/${id}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
     return res as unknown as ApiResponse<IFood>;
   },
 

@@ -189,11 +189,11 @@ export function UserDetailDialog({
                   <StatusBadge variant={isAdmin ? "info" : "muted"}>
                     {isAdmin ? (
                       <span className="flex items-center gap-1">
-                        <ShieldCheck className="h-3 w-3" /> Admin
+                        <ShieldCheck className="h-3 w-3" /> Quản trị viên
                       </span>
                     ) : (
                       <span className="flex items-center gap-1">
-                        <ShieldOff className="h-3 w-3" /> User
+                        <ShieldOff className="h-3 w-3" /> Người dùng
                       </span>
                     )}
                   </StatusBadge>
@@ -315,10 +315,10 @@ export function UserDetailDialog({
                     <div>
                       <p className="text-xs font-medium text-muted-foreground mb-2">Chỉ tiêu mỗi ngày (Macros)</p>
                       <div className="grid grid-cols-4 gap-2">
-                        <MacroChip icon={Flame}   label="Calo"    value={goal.targetCalories} unit=" kcal" color="text-orange-600 border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800" />
-                        <MacroChip icon={Beef}    label="Protein" value={goal.targetProtein}  color="text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800" />
-                        <MacroChip icon={Wheat}   label="Carbs"   value={goal.targetCarbs}    color="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800" />
-                        <MacroChip icon={Droplets} label="Fat"    value={goal.targetFat}       color="text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-800" />
+                        <MacroChip icon={Flame}   label="Calo"       value={goal.targetCalories} unit=" kcal" color="text-orange-600 border-orange-200 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800" />
+                        <MacroChip icon={Beef}    label="Đạm"        value={goal.targetProtein}  color="text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800" />
+                        <MacroChip icon={Wheat}   label="Tinh bột"   value={goal.targetCarbs}    color="text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800" />
+                        <MacroChip icon={Droplets} label="Chất béo" value={goal.targetFat}       color="text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-800" />
                       </div>
                     </div>
                   </div>

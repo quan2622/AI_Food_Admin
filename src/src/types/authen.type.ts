@@ -18,6 +18,8 @@ export interface IUser {
   avatarUrl?: string | null;
   fullName: string;
   dateOfBirth?: string | null;
+  birthOfDate?: string | null;
+  genderCode?: string | null;
   isAdmin: boolean;
   status: boolean;
   createdAt: string;

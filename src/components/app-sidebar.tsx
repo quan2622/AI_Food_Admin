@@ -137,7 +137,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <UtensilsCrossed className="size-4" />
           </div>
           <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
-            <span className="font-semibold text-base">AI Food</span>
+            <span className="font-semibold text-base">NutriLife</span>
             <span className="text-xs text-muted-foreground">Bảng quản trị</span>
           </div>
         </Link>

@@ -4,8 +4,8 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Food Admin",
-  description: "Quản lý AI Food",
+  title: "NutriLife Admin",
+  description: "Quản lý NutriLife",
 };
 
 import { AuthGuard } from "@/components/auth-guard";

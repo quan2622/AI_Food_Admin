@@ -45,7 +45,7 @@ export function NavHeader() {
         </>
       )}
       <span className="font-semibold text-sm text-foreground">
-        {info?.title ?? (pathname === "/" ? "Tổng quan" : "Cổng quản trị AI Food")}
+        {info?.title ?? (pathname === "/" ? "Tổng quan" : "Cổng quản trị NutriLife")}
       </span>
     </div>
   );

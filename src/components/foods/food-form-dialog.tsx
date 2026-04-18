@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Plus, Search, X } from "lucide-react";
+import { ImageIcon, Loader2, Plus, Search, Trash2, X } from "lucide-react";
 import { foodService } from "@/services/foodService";
 import { ingredientService } from "@/services/ingredientService";
 import type { IIngredient } from "@/types/ingredient.type";
@@ -48,7 +48,6 @@ const formSchema = z.object({
     .max(1000, "Mô tả tối đa 1000 ký tự")
     .optional()
     .nullable(),
-  imageUrl: z.string().max(500, "URL quá dài").optional().nullable(),
   categoryId: z.coerce
     .number()
     .positive("Vui lòng chọn danh mục hợp lệ")
@@ -70,7 +69,6 @@ type FoodIngredientFormItem = {
 const defaultValues: FormValues = {
   foodName: "",
   description: "",
-  imageUrl: "",
   categoryId: null,
   defaultServingGrams: 0,
 };
@@ -136,6 +134,9 @@ export function FoodFormDialog({
     Record<number, string>
   >({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const initializedKeyRef = useRef<string | null>(null);
 
   const {
@@ -189,6 +190,8 @@ export function FoodFormDialog({
       setSelectedIngredients([]);
       setIngredientErrors({});
       setSearchTerm("");
+      setImageFile(null);
+      setImagePreview(null);
       return;
     }
 
@@ -216,14 +219,18 @@ export function FoodFormDialog({
           resetRef.current({
             foodName: food.foodName || "",
             description: food.description || "",
-            imageUrl: food.imageUrl || "",
             categoryId: food.categoryId || food.foodCategory?.id || null,
             defaultServingGrams: food.defaultServingGrams ?? 0,
           });
           setSelectedIngredients(mapFoodIngredients(food.foodIngredients));
+          // Show existing image as preview
+          setImagePreview(food.imageUrl || null);
+          setImageFile(null);
         } else {
           resetRef.current(defaultValues);
           setSelectedIngredients([]);
+          setImagePreview(null);
+          setImageFile(null);
         }
 
         setIngredientErrors({});
@@ -244,6 +251,25 @@ export function FoodFormDialog({
       cancelled = true;
     };
   }, [open, initialData]);
+
+  const handleImageChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      setImageFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setImagePreview(objectUrl);
+    },
+    [],
+  );
+
+  const handleRemoveImage = useCallback(() => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
 
   const selectedCategory = watch("categoryId");
 
@@ -337,26 +363,30 @@ export function FoodFormDialog({
         return;
       }
 
-      const payload = {
-        foodName: data.foodName,
-        description: data.description || undefined,
-        imageUrl: data.imageUrl || undefined,
-        categoryId: data.categoryId || undefined,
-        defaultServingGrams: data.defaultServingGrams ?? undefined,
-        ingredients: selectedIngredients.map<IFoodIngredientPayload>(
-          ({ ingredientId, quantity, unit }) => ({
-            ingredientId,
-            quantity,
-            unit,
-          }),
-        ),
-      };
+      const formData = new FormData();
+      formData.append("foodName", data.foodName);
+      if (data.description) formData.append("description", data.description);
+      if (data.categoryId)
+        formData.append("categoryId", String(data.categoryId));
+      if (data.defaultServingGrams !== undefined)
+        formData.append(
+          "defaultServingGrams",
+          String(data.defaultServingGrams),
+        );
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+      // Append ingredients as JSON string
+      const ingredientsPayload = selectedIngredients.map<IFoodIngredientPayload>(
+        ({ ingredientId, quantity, unit }) => ({ ingredientId, quantity, unit }),
+      );
+      formData.append("ingredients", JSON.stringify(ingredientsPayload));
 
       if (initialData?.id) {
-        await foodService.updateFood(initialData.id, payload);
+        await foodService.updateFoodFormData(initialData.id, formData);
         toast.success("Cập nhật món ăn thành công");
       } else {
-        await foodService.createFood(payload);
+        await foodService.createFoodFormData(formData);
         toast.success("Thêm mới món ăn thành công");
       }
 
@@ -388,7 +418,7 @@ export function FoodFormDialog({
         ) : (
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="flex max-h-[calc(100vh-10rem)] flex-col gap-5 px-1 pb-1"
+            className="flex max-h-[75vh] flex-col gap-5 overflow-y-auto px-2 pb-4 pt-1"
           >
             <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
               <div className="space-y-4 rounded-lg border p-4">
@@ -440,16 +470,57 @@ export function FoodFormDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="imageUrl">URL Ảnh</Label>
-                  <Input
-                    id="imageUrl"
-                    placeholder="https://..."
-                    {...register("imageUrl")}
+                  <Label>Ảnh món ăn</Label>
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
                   />
-                  {errors.imageUrl && (
-                    <p className="text-sm text-red-500">
-                      {errors.imageUrl.message}
+                  {imagePreview ? (
+                    <div className="relative w-full overflow-hidden rounded-lg border">
+                      <img
+                        src={imagePreview}
+                        alt="Ảnh xem trước"
+                        className="h-40 w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-6 text-sm text-muted-foreground transition hover:bg-muted/40"
+                    >
+                      <ImageIcon className="h-8 w-8 opacity-40" />
+                      <span>Nhấn để chọn ảnh từ thiết bị</span>
+                      <span className="text-xs opacity-60">
+                        PNG, JPG, WEBP (tối đa 5MB)
+                      </span>
+                    </button>
+                  )}
+                  {imagePreview && !imageFile && (
+                    <p className="text-xs text-muted-foreground">
+                      Ảnh hiện tại. Nhấn vào biểu tượng thùng rác để thay ảnh mới.
                     </p>
+                  )}
+                  {imageFile && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs text-primary underline-offset-4 hover:underline"
+                    >
+                      Đổi ảnh khác
+                    </button>
                   )}
                 </div>
 
@@ -508,7 +579,7 @@ export function FoodFormDialog({
                   </div>
                 </div>
 
-                <ScrollArea className="h-104 rounded-md border">
+                <ScrollArea className="h-[300px] rounded-md border">
                   <div className="space-y-2 p-3">
                     {fetchingIngredients ? (
                       <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
@@ -556,12 +627,9 @@ export function FoodFormDialog({
               </div>
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col space-y-2 rounded-lg border p-4">
+            <div className="flex flex-col space-y-2 rounded-lg border p-4">
               <div className="flex items-center justify-between">
                 <Label>Nguyên liệu đã chọn</Label>
-                <span className="text-xs text-muted-foreground">
-                  Hiển thị 2 cột, cuộn trong danh sách khi quá 2 hàng
-                </span>
               </div>
 
               {selectedIngredients.length === 0 ? (
@@ -569,7 +637,7 @@ export function FoodFormDialog({
                   Chưa có nguyên liệu nào được chọn.
                 </div>
               ) : (
-                <ScrollArea className="h-92 rounded-md border">
+                <ScrollArea className="h-[250px] rounded-md border">
                   <div className="grid gap-3 p-3 md:grid-cols-2">
                     {selectedIngredients.map((item) => (
                       <div
@@ -647,7 +715,7 @@ export function FoodFormDialog({
               )}
             </div>
 
-            <div className="mt-auto flex justify-end gap-2 pt-2">
+            <div className="mt-4 flex justify-end gap-2 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
