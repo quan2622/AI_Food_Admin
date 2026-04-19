@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { type Table, type VisibilityState, type Header } from "@tanstack/react-table";
+import {
+  type Table,
+  type VisibilityState,
+  type Header,
+} from "@tanstack/react-table";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,6 +37,7 @@ interface DataTableToolbarProps<TData> {
     options: { label: string; value: string }[];
   }[];
   toolbarActions?: React.ReactNode;
+  toolbarFilters?: React.ReactNode;
 }
 
 export function DataTableToolbar<TData>({
@@ -42,6 +47,7 @@ export function DataTableToolbar<TData>({
   searchPlaceholder = "Tìm kiếm...",
   filterableColumns = [],
   toolbarActions,
+  toolbarFilters,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -79,7 +85,9 @@ export function DataTableToolbar<TData>({
                 <SelectValue placeholder={column.title} className="truncate" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả {column.title.toLowerCase()}</SelectItem>
+                <SelectItem value="all">
+                  Tất cả {column.title.toLowerCase()}
+                </SelectItem>
                 {column.options.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -89,6 +97,7 @@ export function DataTableToolbar<TData>({
             </Select>
           );
         })}
+        {toolbarFilters}
         {isFiltered && (
           <Button
             variant="ghost"

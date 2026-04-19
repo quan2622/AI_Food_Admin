@@ -41,6 +41,7 @@ interface DataTableProps<TData, TValue> {
   pagination?: PaginationState;
   setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
   toolbarActions?: React.ReactNode;
+  toolbarFilters?: React.ReactNode;
   meta?: any;
   defaultColumnVisibility?: VisibilityState;
 }
@@ -56,17 +57,22 @@ export function DataTable<TData, TValue>({
   pagination: controlledPagination,
   setPagination: setControlledPagination,
   toolbarActions,
+  toolbarFilters,
   meta,
   defaultColumnVisibility = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(defaultColumnVisibility);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>(defaultColumnVisibility);
   const [rowSelection, setRowSelection] = React.useState({});
-  const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [internalPagination, setInternalPagination] =
+    React.useState<PaginationState>({
+      pageIndex: 0,
+      pageSize: 10,
+    });
 
   const isManual = controlledPagination !== undefined;
   const activePagination = controlledPagination ?? internalPagination;
@@ -85,12 +91,7 @@ export function DataTable<TData, TValue>({
     }
     if (rowCount === 0) return 0;
     return pageCount ?? -1;
-  }, [
-    isManual,
-    pageCount,
-    rowCount,
-    activePagination.pageSize,
-  ]);
+  }, [isManual, pageCount, rowCount, activePagination.pageSize]);
 
   /**
    * In MANUAL (server-side) mode:
@@ -109,13 +110,13 @@ export function DataTable<TData, TValue>({
         setInternalPagination(
           (typeof updater === "function"
             ? updater
-            : () => updater) as React.SetStateAction<PaginationState>
+            : () => updater) as React.SetStateAction<PaginationState>,
         );
       }
       // Manual/server-side: intentional no-op.
       // TanStack must NOT be able to reset our external pageIndex.
     },
-    [isManual]
+    [isManual],
   );
 
   /** Called by DataTablePagination buttons (manual mode only) */
@@ -123,7 +124,7 @@ export function DataTable<TData, TValue>({
     (newPageIndex: number) => {
       activeSetPagination((prev) => ({ ...prev, pageIndex: newPageIndex }));
     },
-    [activeSetPagination]
+    [activeSetPagination],
   );
 
   /** Called by DataTablePagination page-size selector (manual mode only) */
@@ -131,7 +132,7 @@ export function DataTable<TData, TValue>({
     (newPageSize: number) => {
       activeSetPagination({ pageIndex: 0, pageSize: newPageSize });
     },
-    [activeSetPagination]
+    [activeSetPagination],
   );
 
   const table = useReactTable({
@@ -171,6 +172,7 @@ export function DataTable<TData, TValue>({
         searchPlaceholder={searchPlaceholder}
         filterableColumns={filterableColumns}
         toolbarActions={toolbarActions}
+        toolbarFilters={toolbarFilters}
       />
       <div className="rounded-xl border bg-card">
         <Table>

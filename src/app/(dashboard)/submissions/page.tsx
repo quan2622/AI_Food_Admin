@@ -38,9 +38,6 @@ import {
   Clock,
   TrendingUp,
   FileText,
-  ThumbsUp,
-  ThumbsDown,
-  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -85,7 +82,9 @@ function StatCard({
 const columns: ColumnDef<IUserSubmission>[] = [
   {
     accessorKey: "id",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="ID" />,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="ID" />
+    ),
     cell: ({ row }) => (
       <span className="font-mono text-xs text-muted-foreground">
         #{row.getValue("id")}
@@ -98,7 +97,8 @@ const columns: ColumnDef<IUserSubmission>[] = [
     header: "Người gửi",
     cell: ({ row }) => {
       const user = row.original.user;
-      if (!user) return <span className="text-muted-foreground text-xs">—</span>;
+      if (!user)
+        return <span className="text-muted-foreground text-xs">—</span>;
       return (
         <div className="flex items-center gap-2">
           <Avatar className="h-7 w-7">
@@ -130,7 +130,7 @@ const columns: ColumnDef<IUserSubmission>[] = [
             "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
             t === "CONTRIBUTION"
               ? "bg-blue-500/10 text-blue-700 border-blue-500/20"
-              : "bg-orange-500/10 text-orange-700 border-orange-500/20"
+              : "bg-orange-500/10 text-orange-700 border-orange-500/20",
           )}
         >
           {TYPE_LABELS[t] ?? t}
@@ -159,33 +159,21 @@ const columns: ColumnDef<IUserSubmission>[] = [
         <StatusBadge
           showDot
           variant={
-            s === "APPROVED" ? "success" : s === "REJECTED" ? "danger" : "warning"
+            s === "APPROVED"
+              ? "success"
+              : s === "REJECTED"
+                ? "danger"
+                : "warning"
           }
         >
-          {s === "APPROVED" ? "Đã duyệt" : s === "REJECTED" ? "Từ chối" : "Chờ xử lý"}
+          {s === "APPROVED"
+            ? "Đã duyệt"
+            : s === "REJECTED"
+              ? "Từ chối"
+              : "Chờ xử lý"}
         </StatusBadge>
       );
     },
-  },
-  {
-    id: "votes",
-    header: "Votes",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2 text-xs">
-        <span className="flex items-center gap-0.5 text-emerald-600">
-          <ThumbsUp className="h-3 w-3" />
-          {row.original.upvotes}
-        </span>
-        <span className="flex items-center gap-0.5 text-red-500">
-          <ThumbsDown className="h-3 w-3" />
-          {row.original.downvotes}
-        </span>
-        <span className="flex items-center gap-0.5 text-amber-500">
-          <Star className="h-3 w-3" />
-          {row.original.reliabilityScore}
-        </span>
-      </div>
-    ),
   },
   {
     accessorKey: "createdAt",
@@ -262,7 +250,7 @@ export default function UserSubmissionsPage() {
     SubmissionStatus | "ALL"
   >("ALL");
   const [filterType, setFilterType] = React.useState<SubmissionType | "ALL">(
-    "ALL"
+    "ALL",
   );
 
   /* Detail dialog */
@@ -302,7 +290,7 @@ export default function UserSubmissionsPage() {
         toast.error("Lỗi kết nối máy chủ");
       }
     },
-    [filterStatus, filterType]
+    [filterStatus, filterType],
   );
 
   React.useEffect(() => {
@@ -335,7 +323,7 @@ export default function UserSubmissionsPage() {
         toast.error("Lỗi kết nối máy chủ");
       }
     },
-    [fetchList, fetchStats, pagination]
+    [fetchList, fetchStats, pagination],
   );
 
   /* ── Open detail (for full review + reject) ── */
@@ -354,14 +342,13 @@ export default function UserSubmissionsPage() {
     () => ({
       onView: handleView,
       onApprove: handleQuickApprove,
-      onReject: handleView, /* open detail for reject so user can enter note */
+      onReject: handleView /* open detail for reject so user can enter note */,
     }),
-    [handleView, handleQuickApprove]
+    [handleView, handleQuickApprove],
   );
 
   return (
     <div className="flex flex-col gap-6">
-
       {/* Stats row */}
       {stats && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -406,7 +393,7 @@ export default function UserSubmissionsPage() {
 
       {/* Table */}
       <DataTable
-        toolbarActions={
+        toolbarFilters={
           <div className="flex items-center gap-2">
             {/* Status filter */}
             <Select
@@ -429,9 +416,7 @@ export default function UserSubmissionsPage() {
             {/* Type filter */}
             <Select
               value={filterType}
-              onValueChange={(v) =>
-                setFilterType(v as SubmissionType | "ALL")
-              }
+              onValueChange={(v) => setFilterType(v as SubmissionType | "ALL")}
             >
               <SelectTrigger className="h-8 w-[140px] text-xs">
                 <SelectValue placeholder="Loại" />
