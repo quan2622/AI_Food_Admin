@@ -145,7 +145,7 @@ export function SubmissionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[90vw] max-w-5xl sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         {/* ── Header ── */}
         <DialogHeader>
           <div className="flex items-start justify-between gap-3">
@@ -235,22 +235,6 @@ export function SubmissionDetailDialog({
                   <span className="text-xs font-medium">
                     {new Date(detail.createdAt).toLocaleString("vi-VN")}
                   </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Đánh giá
-                  </span>
-                  <div className="flex items-center gap-2.5 text-xs">
-                    <span className="flex items-center gap-0.5 text-emerald-600">
-                      <ThumbsUp className="h-3 w-3" /> {detail.upvotes}
-                    </span>
-                    <span className="flex items-center gap-0.5 text-red-500">
-                      <ThumbsDown className="h-3 w-3" /> {detail.downvotes}
-                    </span>
-                    <span className="flex items-center gap-0.5 text-amber-500">
-                      <Star className="h-3 w-3" /> {detail.reliabilityScore}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
