@@ -18,6 +18,7 @@ import { ingredientService } from "@/services/ingredientService";
 import type { IAllergen } from "@/types/ingredient.type";
 import { AllergenFormDialog } from "@/components/ingredients/allergen-form-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 const columns: ColumnDef<IAllergen>[] = [
   {
@@ -29,14 +30,53 @@ const columns: ColumnDef<IAllergen>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Tên chất gây dị ứng" />,
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-orange-500/10 text-orange-600 text-xs font-bold uppercase">
-          {(row.getValue("name") as string).charAt(0)}
-        </span>
-        <span className="font-medium">{row.getValue("name")}</span>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const name = row.getValue("name") as string;
+      const imageUrl = row.original.imageUrl;
+      return (
+        <div className="flex items-center gap-2">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={name}
+              className="h-8 w-8 rounded-full object-cover border"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = "none";
+                target.nextElementSibling?.classList.remove("hidden");
+              }}
+            />
+          ) : null}
+          <span
+            className={cn(
+              "inline-flex h-7 w-7 items-center justify-center rounded-full bg-orange-500/10 text-orange-600 text-xs font-bold uppercase shrink-0",
+              imageUrl && "hidden"
+            )}
+          >
+            {name.charAt(0)}
+          </span>
+          <span className="font-medium">{name}</span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "imageUrl",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Hình ảnh" />,
+    cell: ({ row }) => {
+      const imageUrl = row.original.imageUrl;
+      if (!imageUrl) return <span className="text-muted-foreground text-sm">—</span>;
+      return (
+        <a
+          href={imageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline text-sm max-w-[200px] truncate block"
+        >
+          Xem ảnh
+        </a>
+      );
+    },
   },
   {
     accessorKey: "description",

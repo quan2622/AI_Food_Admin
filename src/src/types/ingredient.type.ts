@@ -2,7 +2,8 @@ export interface IAllergen {
   id: number;
   name: string;
   description: string | null;
-  usersAffected?: number; // Might not come from API but UI needs it or we map it
+  imageUrl?: string | null;
+  usersAffected?: number;
   ingredientsCount?: number;
   createdAt: string;
   /** Ngày cập nhật (API allergens/admin) */
